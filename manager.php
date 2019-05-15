@@ -14,12 +14,6 @@ $sel_device = $_SESSION["device"];
 $doc = 'http://'.$sel_domain.'/devices/'.$sel_device;
 $sel_desc = getDesc($doc);
 
-$flag_show_static  = $_SESSION["flag_show_static"];
-$flag_show_dynamic = $_SESSION["flag_show_dynamic"];
-$flag_show_payload = $_SESSION["flag_show_payload"];
-$flag_show_log     = $_SESSION["flag_show_log"];
-$flag_show_mapping = $_SESSION["flag_show_mapping"];
-
 // Configuration
 //=============================================
 // No configuration needed
@@ -51,34 +45,7 @@ function readDomainUrl($file)
   //echo $url;
   return $url;
 }
-//=============================================
-function showLinesHtml($domain,$file)
-//=============================================
-{
-  echo "==== $file ====<br>";
-  $fh = fopen($file, "r");
-  if ($fh)
-  {
-      echo"<table border=1>";
-      $lines = 0;
-      while(! feof($fh))
-      {
-        $lines++;
-        $line = fgets($fh);
-        $data = explode(" ",$line);
-        $semantic = trim($data[2]);
-        $call = 'http://'.$domain.'/triplets/'.$semantic.'.tpl';
-        //echo $call;
-        $res = file_get_contents($call);
-        echo "<tr><td>$lines</td> <td>$data[0]</td> <td>$data[1]</td> <td>$data[2]</td> <td>$res</td><td>";
-        echo "<a href=\"manager.php?do=delete_mapping&sem=$lines\">X</a>";
-        echo "</td></tr>";
-      }
-      echo"</table>";
-      fclose($fh);
-  }
-  return $lines;
-}
+
 //=============================================
 function generateRandomString($length = 15)
 //=============================================
@@ -288,17 +255,6 @@ if (isset($_GET['do']))
   if($do == 'add_domain')
   {
     $form_add_domain = 1;
-  }
-
-  if($do == 'add_mapping')
-  {
-    $form_add_mapping = 1;
-  }
-
-  if($do == 'delete_mapping')
-  {
-    $semantic = $_GET['sem'];
-    deleteMapping($sel_domain,$semantic);
   }
 
   if($do == 'send_action')
