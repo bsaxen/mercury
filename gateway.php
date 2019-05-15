@@ -5,7 +5,12 @@
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
-
+// Publish
+// http://iot.domain.com/gateway?id=123&no=123&do=config/meta/payload&json={}
+// Log
+// http://iot.domain.com/gateway?id=123&no=123&do=log&log=sdfdfdfg
+// Ping
+// http://iot.domain.com/gateway?id=123&no=123&do=ping
 //=============================================
 // Library
 class model {
@@ -14,6 +19,7 @@ class model {
     public $no;
     public $do;
     public $msg;
+    public $communication;
 }
 
 $obj = new model();
@@ -165,7 +171,7 @@ function readFeedbackFile($fb_file)
   return $result;
 }
 //=============================================
-function readFeedbackFileList($id)
+function feedback($id)
 //=============================================
 {
   $result = ' ';
@@ -227,21 +233,17 @@ function publish($obj)
   }
   return $error;
 }
-//=============================================
-function checkMissedMessage($obj,$new_no)
-//=============================================
-{
-}
+
 //=============================================
 // End of library
 //=============================================
 
-if (isset($_GET['do']))
+if (isset($_GET['do'])) // Mandatory
 {
 
-    $obj->do = $_GET['do'];
+    $obj->do = $_GET['do']; 
 
-    if (isset($_GET['id']))
+    if (isset($_GET['id'])) // Mandatory
     {
 
       // Create device register
@@ -285,14 +287,10 @@ if (isset($_GET['do']))
       exit();
     }
 
-    if (isset($_GET['no']))
+    if (isset($_GET['no'])) // Not mandatory
     {
       $new_no = $_GET['no'];
-      checkMissedMessage($obj,$new_no);
-    }
-    else
-    {
-      systemWarning("Gateway Warning: no sequence number");
+      $obj->missed_msg = $new_no - $obj->no; 
     }
 
     if ($obj->do == 'log')
@@ -300,10 +298,17 @@ if (isset($_GET['do']))
        $obj->error = saveLog($obj);
        errorManagement($obj);
     }
+    
+    if ($obj->do == 'ping')
+    {
+       echo feedback($obj->id);
+       errorManagement($obj);
+    }
 
     if ($obj->do == 'config' || $obj->do == 'meta' || $obj->do == 'payload')
     {
        $obj->error = $publish($obj);
+       echo feedback($obj->id);
        errorManagement($obj);
     }
 
