@@ -314,7 +314,7 @@ if (isset($_GET['do'])) // Mandatory
       {
           $format = 'device %s missed messages %d \n';
           $msg = sprintf($format, $obj->id, $missed); 
-          systemWarning($msg)
+          systemWarning($msg);
       }
     }
 
