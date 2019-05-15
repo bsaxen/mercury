@@ -4,9 +4,10 @@
 # Date: 2019-05-15
 # Description: Mercury heater control algorithm
 # 90 degrees <=> 1152/4 steps = 288
+# Input: Indooor temperature, Outdoor temperature
 # Configuration:
-#c_data         iot.simuino.com 60_01_94_17_88_05 payload temp2
-#c_data         iot.simuino.com 60_01_94_17_88_05 payload temp1
+#c_data_source         iot.simuino.com S101 
+#c_data_source         iot.simuino.com S102
 # =============================================
 import math
 import urllib
@@ -17,21 +18,13 @@ from iotLib import *
 
 #=====================================================
 class HeaterControl:
-
-    temperature_indoor_ix     = 0
-    temperature_outdoor_ix    = 1
-
-    value         = []
-    value_prev    = []
-
     bias  = 0.0
     need  = 1
     pause = 0
-
     temperature_indoor    = 999
     temperature_outdoor   = 999
 #=====================================================
-def control_algorithm(co,dy,hc):
+def control_algorithm(co,me,pa):
     mintemp = float(co.mintemp)
     maxtemp = float(co.maxtemp)
     minheat = float(co.minheat)
@@ -129,8 +122,8 @@ def control_algorithm(co,dy,hc):
     payload += '"temperature_indoor" : "' + str(hc.temperature_indoor) + '"\n'
     payload += '}\n'
 
-    lib_publishMyPayload(co,dy,payload)
-    msg = lib_publishMyDynamic(co,dy)
+    lib_publishMyPayload(co,me,pa)
+    msg = lib_publishMyMeta(co,me)
 
     if ":" in msg:
 		p = msg.split(':')
@@ -173,7 +166,7 @@ def getLatestValue(co,dy,hc,ix):
 #===================================================
 # Setup
 #===================================================
-hc = HeaterControl()
+pa = HeaterControl()
 
 confile = "heatercontrol.conf"
 version = 1
