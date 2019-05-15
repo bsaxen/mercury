@@ -1,7 +1,7 @@
 <?php
 //=============================================
 // File.......: manager.php
-// Date.......: 2019-05-14
+// Date.......: 2019-05-15
 // Author.....: Benny Saxen
 // Description: Mercury Device Manager
 //=============================================
@@ -484,21 +484,14 @@ $data = array();
       height: 900px;
       }
 
-      #status {
+      #config {
       color: #336600;
       //background-color: grey;
       float: left;
       width: 400px;
       }
 
-      #static {
-      color: #336600;
-      //background-color: grey;
-      float: left;
-      width: 400px;
-      }
-
-      #dynamic {
+      #meta {
       color: #336600;
       //background-color: red;
       float: left;
@@ -518,13 +511,6 @@ $data = array();
       //background-color: yellow;
       float: left;
       width: 600px;
-      }
-
-      #mapping {
-        color: #336600;
-        //background-color: yellow;
-        float: left;
-        width: 600px;
       }
 
       html {
@@ -615,22 +601,10 @@ $data = array();
 //=========================================================================
 // body
 //=========================================================================
-      echo("<b>Device Manager $sel_domain $sel_desc $now</b>");
+      echo("<b>Mercury Device Manager $sel_domain $sel_desc $now</b>");
       echo "<div class=\"navbar\">";
 
       echo "<a href=\"manager.php?do=add_domain\">Add Domain</a>";
-
-      echo "  <div class=\"dropdown\">
-          <button class=\"dropbtn\">Select Information
-            <i class=\"fa fa-caret-down\"></i>
-          </button>
-          <div class=\"dropdown-content\">
-           ";
-          echo "<a href=manager.php?do=info&what=static>static</a>";
-          echo "<a href=manager.php?do=info&what=dynamic>dynamic</a>";
-          echo "<a href=manager.php?do=info&what=payload>payload</a>";
-          echo "<a href=manager.php?do=info&what=log>log</a>";
-          echo "</div></div>";
 
         echo "<div class=\"dropdown\">
             <button class=\"dropbtn\">Select Domain
@@ -679,17 +653,9 @@ $data = array();
                     $device = str_replace(".reg", "", $data[$ii]);
                     if (strlen($device) > 2)
                     {
-                      $doc = 'http://'.$sel_domain.'/devices/'.$device;
-                      //$status = getStatus($doc);
-                      $desc = getDesc($doc);
-                      //$temp = $device;
-                      //if ($status == 0)
-                      //{
+                        $doc = 'http://'.$sel_domain.'/devices/'.$device;
+                        $desc = getDesc($doc);
                         echo "<a style=\"background: cornsilk;\" href=manager.php?do=select&device=$device>$desc</a>";
-                      //}
-                      //else {
-                      //  echo "<a style=\"background: red;\" href=manager.php?do=select&device=$device>$temp $desc</a>";
-                      //}
                      }
                    }
           echo "</div></div>";
@@ -714,11 +680,7 @@ $data = array();
       </button>
       <div class=\"dropdown-content\">
       ";
-        
-      echo "<a href=manager.php?do=list_mapping>List</a>";
-      echo "<a href=manager.php?do=add_mapping>Add</a>";
-      echo "</div></div>";
-
+      
       echo "<a href=\"status.php\" target=\"_blank\">Status</a>";
 
       echo "</div>";
@@ -752,24 +714,10 @@ if ($form_add_domain == 1)
     </form> ";
 }
 
-if ($form_add_mapping == 1)
-{
-  echo "
-  <form action=\"#\" method=\"post\">
-    <input type=\"hidden\" name=\"do\" value=\"add_mapping\">
-    <br>Device<input type=\"text\" name=\"device\">
-    <br>Parameter<input type=\"text\" name=\"parameter\">
-    <br>Semantic<input type=\"text\" name=\"semantic\">
-    <br><input type= \"submit\" value=\"Add Mapping\">
-    </form> ";
-}
 
-//  echo "<div id=\"container\">";
-if ($flag_show_static == 0)
-{
-  echo "<div id=\"static\">";
-  echo "Static";
-  $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/static.json';
+  echo "<div id=\"config\">";
+  echo "Config";
+  $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/config.json';
   $json   = file_get_contents($doc);
   if ($json)
   {
@@ -778,13 +726,12 @@ if ($flag_show_static == 0)
   }
   //echo ("<br>static<br><iframe style=\"background: #FFFFFF;\" src=$doc width=\"400\" height=\"300\"></iframe>");
   echo "</div>";
-}
 
-if ($flag_show_dynamic == 0)
-{
-  echo "<div id=\"dynamic\">";
-  echo "Dynamic";
-  $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/dynamic.json';
+
+
+  echo "<div id=\"meta\">";
+  echo "Meta";
+  $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/meta.json';
   $json   = file_get_contents($doc);
   if ($json)
   {
@@ -793,10 +740,8 @@ if ($flag_show_dynamic == 0)
   }
   //echo ("<br>dynamic<br><iframe style=\"background: #FFFFFF;\" src=$doc width=\"400\" height=\"300\"></iframe>");
     echo "</div>";
-}
 
-if ($flag_show_payload == 0)
-{
+
   echo "<div id=\"payload\">";
   echo "Payload";
   $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/payload.json';
@@ -808,26 +753,13 @@ if ($flag_show_payload == 0)
   }
   //echo ("<br>payload<br><iframe style=\"background: #FFFFFF;\" src=$doc width=\"400\" height=\"300\"></iframe>");
     echo "</div>";
-}
 
-if ($flag_show_log == 0)      
-{
+
   $rnd = generateRandomString(3);
   echo "<div id=\"log\">";
   $doc = 'http://'.$sel_domain.'/devices/'.$sel_device.'/log.txt?ignore='.$rnd;
   echo ("<br>log<br><iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc width=\"500\" height=\"600\"></iframe>");
   echo "</div>";
-}
-
-if ($flag_show_mapping == 0)
-{
-  echo "<div id=\"mapping\">";
-  $doc = 'http://'.$sel_domain.'/mapping.txt';
-  showLinesHtml($sel_domain,$doc);
-  //echo ("<br>log<br><iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc width=\"500\" height=\"600\"></iframe>");
-  echo "</div>";
-}
-//  echo "</div";
 
 
 echo "</body></html>";
