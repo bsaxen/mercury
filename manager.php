@@ -527,6 +527,7 @@ echo "<div class=\"navbar\">";
                 $file = fopen('domain.list', "r");
                 if ($file)
                 {
+                  while(!feof($file))
                   {
                     $line = fgets($file);
                     if (strlen($line) > 2)
