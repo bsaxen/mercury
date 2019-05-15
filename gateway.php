@@ -1,19 +1,22 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-05-14
+// Date.......: 2019-05-15
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
-
+int NO_ERROR              =    0;
+int ERROR_READING_NO_FILE =  101;
 //=============================================
 // Library
 class model {
     public $sys_ts;
     public $id;
-    public $msg_static;
-    public $msg_dynamic;
+    public $no;
+    public $msg_config;
+    public $msg_meta;
     public $msg_payload;
+    public $msg;
 }
 
 $obj = new model();
@@ -22,60 +25,15 @@ $obj = new model();
 $date         = date_create();
 $obj->sys_ts  = date_format($date, 'Y-m-d H:i:s');
 
-
 //=============================================
-function saveStaticMsg($obj)
-//=============================================
-{
-  $f_file = 'devices/'.$obj->id.'/static.json';
-  //echo $f_file;
-  $doc = fopen($f_file, "w");
-  if ($doc)
-  {
-        fwrite($doc, "{\n");
-        fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
-        fwrite($doc, "   \"id\":       \"$obj->id\",\n");
-        fwrite($doc, "   \"msg\": $obj->msg_static\n");
-        fwrite($doc, "}\n ");
-        fclose($doc);
-  }
-  return;
-}
-//=============================================
-function saveDynamicMsg($obj)
+function errorManagement($error)
 //=============================================
 {
-  $f_file = 'devices/'.$obj->id.'/dynamic.json';
-  $doc = fopen($f_file, "w");
+  $f_file = 'errors.txt';
+  $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "{\n");
-        fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
-        fwrite($doc, "   \"msg\":  $obj->msg_dynamic\n");
-        fwrite($doc, "}\n ");
-        fclose($doc);
-  }
-    
-  //$json      = utf8_encode($obj->msg_dynamic);
-  //$dec       = json_decode($json, TRUE);
-  //$counter   = $dec['counter'];
-  //$obj->log  = $counter;
-  //saveLog($obj);
-    
-  return;
-}
-//=============================================
-function savePayloadMsg($obj)
-//=============================================
-{
-  $f_file = 'devices/'.$obj->id.'/payload.json';
-  $doc = fopen($f_file, "w");
-  if ($doc)
-  {
-        fwrite($doc, "{\n");
-        fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
-        fwrite($doc, "   \"msg\":  $obj->msg_payload\n");
-        fwrite($doc, "}\n ");
+        fwrite($doc, "$obj->sys_ts $error\n");
         fclose($doc);
   }
   return;
@@ -84,66 +42,85 @@ function savePayloadMsg($obj)
 function initLog($obj)
 //=============================================
 {
+  $error = NO_ERROR;
   $f_file = 'devices/'.$obj->id.'/log.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
-        fwrite($doc, "$obj->sys_ts Created\n");
+        fwrite($doc, "$obj->sys_ts initialized\n");
         fclose($doc);
   }
-  return;
+  else
+  {
+      $error = ERROR_INIT_LOG;
+  }
+  return $error;
 }
 //=============================================
 function saveLog($obj)
 //=============================================
 {
+  $error = NO_ERROR;
+  $log   = $_GET['log'];
+  $log   = str_replace(" ","_",$log);  
   $f_file = 'devices/'.$obj->id.'/log.txt';
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$obj->sys_ts $obj->log\n");
+        fwrite($doc, "$obj->sys_ts $log\n");
         fclose($doc);
   }
-  return;
+  else
+  {
+      $error = ERROR_SAVE_LOG;
+  }
+  return $error;
 }
 
 //=============================================
-function writeNo($obj,$no)
+function writeNo($obj)
 //=============================================
 {
+  $error = NO_ERROR;
   $f_file = 'devices/'.$obj->id.'/no.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
-        fwrite($doc, "$no");
+        fwrite($doc, "$obj->no");
         fclose($doc);
   }
-  return;
+  else
+  {
+      $error = ERROR_WRITE_NO;
+  }
+  return $error;
 }
 //=============================================
 function readNo($obj)
 //=============================================
 {
+  $error = NO_ERROR;
   $file = 'devices/'.$obj->id.'/no.txt';
   if ($file)
   {
       while(!feof($file))
       {
         $result = fgets($file);
-        $result = trim($result);
+        $obj->no = trim($result);
       }
       fclose($file);
   }
   else
   {
-      $result = 0;
+      $error = ERROR_READ_NO;
   }
-  return $result;
+  return $error;
 }
 //=============================================
 function readFeedbackFile($fb_file)
 //=============================================
 {
+  $error = NO_ERROR;
   $file = fopen($fb_file, "r");
   if ($file)
   {
@@ -169,6 +146,7 @@ function readFeedbackFile($fb_file)
 function readFeedbackFileList($id)
 //=============================================
 {
+  $error = NO_ERROR;
   $result = ' ';
   $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
   //echo $do;
@@ -193,101 +171,51 @@ function readFeedbackFileList($id)
 }
 
 //=============================================
-function createTriplets($obj)
-//=============================================
-{
-    $f_file = 'devices/'.$obj->id.'/payload.json';
-    $json = file_get_contents($f_file);
-    
-    $jsonIterator = new RecursiveIteratorIterator(
-    new RecursiveArrayIterator(json_decode($json, TRUE)),
-    RecursiveIteratorIterator::SELF_FIRST);
-
-    foreach ($jsonIterator as $key => $val) 
-    {
-         if(is_array($val)) 
-         {
-             //echo "$key:\n";
-         } 
-         else
-         {
-             //echo "$key => $val\n";
-             $semantic = NULL;
-             $semantic = getSemantic($obj->id,$key);
-             if ($semantic != NULL)
-             {
-               writeTriplet($semantic,$val);
-             }
-         }
-    }
-}
-//=============================================
-function getSemantic($id, $par)
-//=============================================
-{  
-  $result = NULL;
-  $m_file = 'mapping.txt';
-  $file = fopen($m_file, "r");
-  if ($file)
-  {
-      while(!feof($file))
-      {
-        $line = fgets($file);
-        sscanf($line,"%s %s %s",$key_id,$key_par,$semantic);
-        if ($key_id == $id && $key_par == $par)
-        {
-          $result = $semantic;
-        }
-      }
-      fclose($file);
-  }
-  else
-  {
-      $result = NULL;
-  }
-  return $result;
-}
-//=============================================
-function writeTriplet($semantic, $value)
-//=============================================
-{  
-  $result = 0;
-  $f_file = 'triplets/'.$semantic.'.tpl';
-  $file = fopen($f_file, "w");
-  if ($file)
-  {
-    fwrite($file,$value);
-    fclose($file);
-  }
-  else
-  {
-    $result = 1;
-  }
-  return $result;
-}
-
-//=============================================
 function listAllFeedback($id)
 //=============================================
 {
   $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
-  //echo $do;
   system($do);
   $list_file = 'devices/'.$id.'/feedback.work';
   $no_of_lines = count(file($list_file));
   echo $no_of_lines;
 }
 //=============================================
+function publish($obj,$name)
+//=============================================
+{
+  $error = NO_ERROR;
+  $obj->msg = "{\"no_data\":\"0\"}";
+  if (isset($_GET['json'])) {
+      $obj->msg = $_GET['json'];
+  }
+    
+  $f_file = 'devices/'.$obj->id.'/'.$name.'.json';
+  $doc = fopen($f_file, "w");
+  if ($doc)
+  {
+      fwrite($doc, "{\n");
+      fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
+      fwrite($doc, "   \"data\": $obj->msg\n");
+      fwrite($doc, "}\n ");
+      fclose($doc);
+  }
+  else
+  {
+     $error = ERROR_PUBLISH; 
+  }
+  return $error;
+}
+//=============================================
 // End of library
 //=============================================
 
+$error = NO_ERROR;
 if (isset($_GET['do']))
 {
 
     $do = $_GET['do'];
 
-    // Check if id is given
-    $error = 1;
     if (isset($_GET['id']))
     {
 
@@ -295,8 +223,6 @@ if (isset($_GET['do']))
       $obj->id = $_GET['id'];
       $obj->id  = str_replace(":","_",$obj->id);
         
-      $error = 0;
-
       $ok = 0;
       $dir = 'devices/'.$obj->id;
       if (is_dir($dir)) $ok++;
@@ -306,78 +232,53 @@ if (isset($_GET['do']))
       if ($ok == 0) // New device - register!
       {
          mkdir($dir, 0777, true);
-        //===========================================
-        // Registration
-        //===========================================
+
         // Create register directory if not exist
         $dir = 'register';
         if (!is_dir($dir))
         {
            mkdir($dir, 0777, true);
         }
-        //$filename = str_replace("/","_",$obj->id);
+          
         $filename = 'register/'.$obj->id.'.reg';
         $doc = fopen($filename, "w");
         fwrite($doc, "$gs_ts $ts $obj->id");
         fclose($doc);
+        $obj->error = initLog($obj);
+        errorManagement($obj);
       }
+        
       if ($ok == 1) // un-complete register
       {
-        $error = 3;
-        echo "Error: register broken";
+        echo "Gateway Error: device registration not complete";
+        exit();
       }
     }
     else
     {
-      $error = 2;
-      echo "Error: no id specified";
+      echo "Gateway Error: no device id";
+      exit();
     }
 
 
-    // API when id is available
-    if($error == 0)
+    if ($do == 'log')
     {
+       $obj->log   = $_GET['log'];
+       $obj->error = saveLog($obj);
+       errorManagement($obj);
+    }
 
-      if ($do == 'log')
-      {
-        $obj->log   = $_GET['log'];
-        saveLog($obj);
-      }
+    if ($do == 'config' || $do == 'meta' || $do == 'payload')
+    {
+       $$obj->error = $publish($obj,$do);
+       errorManagement($obj);
+    }
 
-      if ($do == 'config')
-      {
-          $obj->msg_static = "{\"no_data\":\"0\"}";
-        if (isset($_GET['json'])) {
-          $obj->msg_static = $_GET['json'];
-        }
-        saveStaticMsg($obj);
-        //echo readFeedbackFileList($obj->id);
-      }
-
-      if ($do == 'dynamic')
-      {
-        $obj->msg_dynamic = "{\"no_data\":\"0\"}";
-        if (isset($_GET['json'])) {
-          $obj->msg_dynamic = $_GET['json'];
-        }
-        saveDynamicMsg($obj);
-        echo readFeedbackFileList($obj->id);
-      }
-
-      if ($do == 'payload')
-      {
-        $obj->msg_payload = "{\"no_data\":\"0\"}";
-        if (isset($_GET['json'])) {
-          $obj->msg_payload = $_GET['json'];
-        }
-        savePayloadMsg($obj);
-        createTriplets($obj);
-        //echo readFeedbackFileList($obj->id);
-      }
-
- } // error
 } // do
 else
-  echo "Gateway ok";
+  echo "Gateway ok - ready for use";
+
+//===========================================
 // End of file
+//===========================================
 ?>
