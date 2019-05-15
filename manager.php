@@ -199,22 +199,6 @@ function generateForm($inp,$color)
    return $id;
 }
 //=============================================
-function addMapping($domain,$device,$parameter,$semantic)
-//=============================================
-{
-  $call = 'http://'.$domain.'/gateway.php?do=add_mapping&dev='.$device.'&par='.$parameter.'&sem='.$semantic;
-  echo $call;
-  $res = file_get_contents($call);
-}
-//=============================================
-function deleteMapping($domain,$semantic)
-//=============================================
-{
-  $call = 'http://'.$domain.'/gateway.php?do=del_mapping&sem='.$semantic;
-  echo $call;
-  $res = file_get_contents($call);
-}
-//=============================================
 function addDomain($domain)
 //=============================================
 {
@@ -246,38 +230,6 @@ function getDesc($uri)
   $desc      = $dec['msg']['desc'];
   return $desc;
 }
-//=============================================
-function getStatus($uri)
-//=============================================
-{
-  $url       = $uri.'/static.json';
-  $json      = file_get_contents($url);
-  $json      = utf8_encode($json);
-  $dec       = json_decode($json, TRUE);
-  $period    = $dec['msg']['period'];
-
-  $url       = $uri.'/dynamic.json';
-  $json      = file_get_contents($url);
-  $json      = utf8_encode($json);
-  $dec       = json_decode($json, TRUE);
-  $timestamp = $dec['sys_ts'];
-  
-  $now       = date_create('now')->format('Y-m-d H:i:s');
-
-  $diff = strtotime($now) - strtotime($timestamp);
-
-  $res = 999;
-  $bias = 1;
-  if ($diff > $period + $bias)
-  {
-    $res = $diff - $period - $bias;
-  }
-  else {
-    $res = 0;
-  }
-  return ($res);
-}
-
 
 //=============================================
 function sendMessage($url,$device,$msg,$tag)
@@ -288,6 +240,36 @@ function sendMessage($url,$device,$msg,$tag)
   $res = file_get_contents($call);
 }
 //=============================================
+function listAllDevices()
+//=============================================
+{
+  $do = "ls register"."/"."*.reg > register/register.work";
+  //echo $do;
+  system($do);
+  $result = '';
+  $file = fopen('register/register.work', "r");
+  if ($file)
+  {
+    while(!feof($file))
+    {
+      $line = fgets($file);
+      //echo $line;
+      if (strlen($line) > 2)
+      {
+          $line = trim($line);
+          $file2 = fopen($line, "r");
+          if ($file2)
+          {
+                  $line2 = fgets($file2);
+                  $line2 = trim($line2);
+                  $result = $result + $line2.':';
+          }
+      }
+    }
+  }
+  return $result;
+}
+//=============================================
 // End of library
 //=============================================
 
@@ -296,37 +278,8 @@ function sendMessage($url,$device,$msg,$tag)
 // Back-End
 //=============================================
 
-if (isset($_GET['flag'])) {
-  $flag = $_GET['flag'];
-  $status = $_GET['status'];
-  if ($flag == "static")
-  {
-    $flag_show_static = $status;
-    $_SESSION["flag_show_static"] = $status;
-  }
-  if ($flag == "dynamic")
-  {
-    $flag_show_dynamic = $status;
-    $_SESSION["flag_show_dynamic"] = $status;
-  }
-  if ($flag == "payload")
-  {
-    $flag_show_payload = $status;
-    $_SESSION["flag_show_payload"] = $status;
-  }
-  if ($flag == "log")
-  {
-    $flag_show_log = $status;
-    $_SESSION["flag_show_log"] = $status;
-  }
-  if ($flag == "mapping")
-  {
-    $flag_show_mapping = $status;
-    $_SESSION["flag_show_mapping"] = $status;
-  }
-}
-
-if (isset($_GET['do'])) {
+if (isset($_GET['do'])) 
+{
 
   $do = $_GET['do'];
 
@@ -368,43 +321,6 @@ if (isset($_GET['do'])) {
     }
   }
 
-  if($do == 'info')
-  {
-    if (isset($_GET['what']))
-    {
-      $temp = $_GET['what'];
-
-      if ($temp == 'static')
-      {
-        $flag_show_static += 1;
-        if ($flag_show_static > 1)$flag_show_static = 0;
-        $_SESSION["flag_show_static"] = $flag_show_static;
-      }
-
-      if ($temp == 'dynamic')
-      {
-        $flag_show_dynamic += 1;
-        if ($flag_show_dynamic > 1)$flag_show_dynamic = 0;
-        $_SESSION["flag_show_dynamic"] = $flag_show_dynamic;
-      }
-
-      if ($temp == 'payload')
-      {
-        $flag_show_payload += 1;
-        if ($flag_show_payload > 1)$flag_show_payload = 0;
-        $_SESSION["flag_show_payload"] = $flag_show_payload;
-      }
-
-      if ($temp == 'log')
-      {
-        $flag_show_log += 1;
-        if ($flag_show_log > 1)$flag_show_log = 0;
-        $_SESSION["flag_show_log"] = $flag_show_log;
-      }
-
-
-    }
-  }
 
   if($do == 'delete')
   {
@@ -431,24 +347,17 @@ if (isset($_GET['do'])) {
     $topic = $_GET['topic'];
     restApi($api,$url,$topic);
   }
-
 }
+  
 
-if (isset($_POST['do'])) {
+if (isset($_POST['do'])) 
+{
   $do = $_POST['do'];
 
   if ($do == 'add_domain')
   {
     $dn = $_POST['domain'];
     if (strlen($dn) > 2)addDomain($dn);
-  }
-
-  if ($do == 'add_mapping')
-  {
-    $device    = $_POST['device'];
-    $parameter = $_POST['parameter'];
-    $semantic  = $_POST['semantic'];
-    if (strlen($device) > 2)addMapping($sel_domain,$device,$parameter,$semantic);
   }
 
   if ($do == 'send_message')
@@ -462,7 +371,6 @@ if (isset($_POST['do'])) {
     else
       echo "Message to short";
   }
-
 }
 
 //=============================================
@@ -635,14 +543,7 @@ echo "<div class=\"navbar\">";
                </button>
                <div class=\"dropdown-content\">
                ";
-                   $request = 'http://'.$sel_domain."/gateway.php?do=list_devices";
-                   //echo $request;
-                   $ctx = stream_context_create(array('http'=>
-                   array(
-                     'timeout' => 2,  //2 Seconds
-                       )
-                     ));
-                   $res = file_get_contents($request,false,$ctx);
+                   $data = listAllDevices();
                    $data = explode(":",$res);
                    $num = count($data);
 
