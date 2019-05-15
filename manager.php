@@ -570,8 +570,8 @@ echo "<div class=\"navbar\">";
                <div class=\"dropdown-content\">
                ";            
                    echo "<a href=manager.php?do=delete&what=domain>$sel_domain</a>";
-                   echo "<a href=manager.php?do=delete&what=device>$sel_desc</a>";
-                   echo "<a href=manager.php?do=delete&what=log>clear log $sel_desc</a>";
+                   echo "<a href=manager.php?do=delete&what=device>$sel_device</a>";
+                   echo "<a href=manager.php?do=delete&what=log>clear log $sel_device</a>";
       echo "</div></div>";
       
       echo "<a href=\"status.php\" target=\"_blank\">Status</a>";
