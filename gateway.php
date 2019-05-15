@@ -19,7 +19,7 @@ class model {
     public $no;
     public $do;
     public $msg;
-    public $communication;
+    public $missed_msg;
 }
 
 $obj = new model();
@@ -223,6 +223,8 @@ function publish($obj)
   {
       fwrite($doc, "{\n");
       fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
+      fwrite($doc, "   \"no\":   \"$obj->no\",\n");
+      fwrite($doc, "   \"missed_msg\":   \"$obj->missed_msg\",\n");
       fwrite($doc, "   \"data\": $obj->msg\n");
       fwrite($doc, "}\n ");
       fclose($doc);
