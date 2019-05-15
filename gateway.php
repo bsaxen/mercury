@@ -5,17 +5,14 @@
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
-int NO_ERROR              =    0;
-int ERROR_READING_NO_FILE =  101;
+
 //=============================================
 // Library
 class model {
     public $sys_ts;
     public $id;
     public $no;
-    public $msg_config;
-    public $msg_meta;
-    public $msg_payload;
+    public $do;
     public $msg;
 }
 
@@ -26,14 +23,40 @@ $date         = date_create();
 $obj->sys_ts  = date_format($date, 'Y-m-d H:i:s');
 
 //=============================================
-function errorManagement($error)
+function systemError($msg)
+//=============================================
+{
+  $f_file = 'system_errors.txt';
+  $doc = fopen($f_file, "a");
+  if ($doc)
+  {
+        fwrite($doc, "$obj->sys_ts $msg\n");
+        fclose($doc);
+  }
+  return;
+}
+//=============================================
+function systemWarning($msg)
+//=============================================
+{
+  $f_file = 'system_warnings.txt';
+  $doc = fopen($f_file, "a");
+  if ($doc)
+  {
+        fwrite($doc, "$obj->sys_ts $msg\n");
+        fclose($doc);
+  }
+  return;
+}
+//=============================================
+function errorManagement($obj)
 //=============================================
 {
   $f_file = 'errors.txt';
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$obj->sys_ts $error\n");
+        fwrite($doc, "$obj->sys_ts $obj->id $obj->no $obj->do $obj->error\n");
         fclose($doc);
   }
   return;
@@ -42,7 +65,7 @@ function errorManagement($error)
 function initLog($obj)
 //=============================================
 {
-  $error = NO_ERROR;
+  $error = "NO_ERROR";
   $f_file = 'devices/'.$obj->id.'/log.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
@@ -52,7 +75,7 @@ function initLog($obj)
   }
   else
   {
-      $error = ERROR_INIT_LOG;
+      $error = "ERROR_INIT_LOG";
   }
   return $error;
 }
@@ -60,7 +83,7 @@ function initLog($obj)
 function saveLog($obj)
 //=============================================
 {
-  $error = NO_ERROR;
+  $error = "NO_ERROR";
   $log   = $_GET['log'];
   $log   = str_replace(" ","_",$log);  
   $f_file = 'devices/'.$obj->id.'/log.txt';
@@ -72,7 +95,7 @@ function saveLog($obj)
   }
   else
   {
-      $error = ERROR_SAVE_LOG;
+      $error = "ERROR_SAVE_LOG";
   }
   return $error;
 }
@@ -81,7 +104,7 @@ function saveLog($obj)
 function writeNo($obj)
 //=============================================
 {
-  $error = NO_ERROR;
+  $error = "NO_ERROR";
   $f_file = 'devices/'.$obj->id.'/no.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
@@ -91,7 +114,7 @@ function writeNo($obj)
   }
   else
   {
-      $error = ERROR_WRITE_NO;
+      $error = "ERROR_WRITE_NO";
   }
   return $error;
 }
@@ -99,7 +122,7 @@ function writeNo($obj)
 function readNo($obj)
 //=============================================
 {
-  $error = NO_ERROR;
+  $error = "NO_ERROR";
   $file = 'devices/'.$obj->id.'/no.txt';
   if ($file)
   {
@@ -112,7 +135,7 @@ function readNo($obj)
   }
   else
   {
-      $error = ERROR_READ_NO;
+      $error = "ERROR_READ_NO";
   }
   return $error;
 }
@@ -120,7 +143,6 @@ function readNo($obj)
 function readFeedbackFile($fb_file)
 //=============================================
 {
-  $error = NO_ERROR;
   $file = fopen($fb_file, "r");
   if ($file)
   {
@@ -146,7 +168,6 @@ function readFeedbackFile($fb_file)
 function readFeedbackFileList($id)
 //=============================================
 {
-  $error = NO_ERROR;
   $result = ' ';
   $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
   //echo $do;
@@ -181,16 +202,16 @@ function listAllFeedback($id)
   echo $no_of_lines;
 }
 //=============================================
-function publish($obj,$name)
+function publish($obj)
 //=============================================
 {
-  $error = NO_ERROR;
+  $error = "NO_ERROR";
   $obj->msg = "{\"no_data\":\"0\"}";
   if (isset($_GET['json'])) {
       $obj->msg = $_GET['json'];
   }
     
-  $f_file = 'devices/'.$obj->id.'/'.$name.'.json';
+  $f_file = 'devices/'.$obj->id.'/'.$obj->do.'.json';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -202,19 +223,23 @@ function publish($obj,$name)
   }
   else
   {
-     $error = ERROR_PUBLISH; 
+     $error = "ERROR_PUBLISH"; 
   }
   return $error;
+}
+//=============================================
+function checkMissedMessage($obj,$new_no)
+//=============================================
+{
 }
 //=============================================
 // End of library
 //=============================================
 
-$error = NO_ERROR;
 if (isset($_GET['do']))
 {
 
-    $do = $_GET['do'];
+    $obj->do = $_GET['do'];
 
     if (isset($_GET['id']))
     {
@@ -250,27 +275,35 @@ if (isset($_GET['do']))
         
       if ($ok == 1) // un-complete register
       {
-        echo "Gateway Error: device registration not complete";
+        systemError("Gateway Error: device registration not complete");
         exit();
       }
     }
     else
     {
-      echo "Gateway Error: no device id";
+      systemError("Gateway Error: no device id");
       exit();
     }
 
-
-    if ($do == 'log')
+    if (isset($_GET['no']))
     {
-       $obj->log   = $_GET['log'];
+      $new_no = $_GET['no'];
+      checkMissedMessage($obj,$new_no);
+    }
+    else
+    {
+      systemWarning("Gateway Warning: no sequence number");
+    }
+
+    if ($obj->do == 'log')
+    {
        $obj->error = saveLog($obj);
        errorManagement($obj);
     }
 
-    if ($do == 'config' || $do == 'meta' || $do == 'payload')
+    if ($obj->do == 'config' || $obj->do == 'meta' || $obj->do == 'payload')
     {
-       $$obj->error = $publish($obj,$do);
+       $obj->error = $publish($obj);
        errorManagement($obj);
     }
 
