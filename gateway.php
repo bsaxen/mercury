@@ -19,7 +19,6 @@ class model {
     public $no;
     public $do;
     public $msg;
-    public $missed_msg;
 }
 
 $obj = new model();
@@ -86,6 +85,24 @@ function initLog($obj)
   return $error;
 }
 //=============================================
+function initNo($obj)
+//=============================================
+{
+  $error = "NO_ERROR";
+  $f_file = 'devices/'.$obj->id.'/no.txt';
+  $doc = fopen($f_file, "w");
+  if ($doc)
+  {
+        fwrite($doc, "0\n");
+        fclose($doc);
+  }
+  else
+  {
+      $error = "ERROR_INIT_NO";
+  }
+  return $error;
+}
+//=============================================
 function saveLog($obj)
 //=============================================
 {
@@ -145,6 +162,7 @@ function readNo($obj)
   }
   return $error;
 }
+
 //=============================================
 function readFeedbackFile($fb_file)
 //=============================================
@@ -224,7 +242,6 @@ function publish($obj)
       fwrite($doc, "{\n");
       fwrite($doc, "   \"sys_ts\":   \"$obj->sys_ts\",\n");
       fwrite($doc, "   \"no\":   \"$obj->no\",\n");
-      fwrite($doc, "   \"missed_msg\":   \"$obj->missed_msg\",\n");
       fwrite($doc, "   \"data\": $obj->msg\n");
       fwrite($doc, "}\n ");
       fclose($doc);
@@ -292,7 +309,13 @@ if (isset($_GET['do'])) // Mandatory
     if (isset($_GET['no'])) // Not mandatory
     {
       $new_no = $_GET['no'];
-      $obj->missed_msg = $new_no - $obj->no; 
+      $missed = $new_no - $obj->no; 
+      if ($missed != 1)
+      {
+          $format = 'device %s missed messages %d \n';
+          $msg = sprintf($format, $obj->id, $missed); 
+          systemWarning($msg)
+      }
     }
 
     if ($obj->do == 'log')
