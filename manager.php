@@ -262,11 +262,13 @@ function listAllDevices()
           {
                   $line2 = fgets($file2);
                   $line2 = trim($line2);
-                  $result = $result + $line2.':';
+                  //echo $line2;
+                  $result = $result.$line2.':';
           }
       }
     }
   }
+  //echo $result;
   return $result;
 }
 //=============================================
@@ -543,7 +545,7 @@ echo "<div class=\"navbar\">";
                </button>
                <div class=\"dropdown-content\">
                ";
-                   $data = listAllDevices();
+                   $res = listAllDevices();
                    $data = explode(":",$res);
                    $num = count($data);
 
@@ -552,9 +554,9 @@ echo "<div class=\"navbar\">";
                       $device = str_replace(".reg", "", $data[$ii]);
                       if (strlen($device) > 2)
                       {
-                          $doc = 'http://'.$sel_domain.'/devices/'.$device;
-                          $desc = getDesc($doc);
-                          echo "<a style=\"background: cornsilk;\" href=manager.php?do=select&device=$device>$desc</a>";
+                          //$doc = 'http://'.$sel_domain.'/devices/'.$device;
+                          //$desc = getDesc($doc);
+                          echo "<a style=\"background: cornsilk;\" href=manager.php?do=select&device=$device>$device</a>";
                       }
                    }
       echo "</div></div>";
