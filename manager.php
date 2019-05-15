@@ -601,85 +601,75 @@ $data = array();
 //=========================================================================
 // body
 //=========================================================================
-      echo("<b>Mercury Device Manager $sel_domain $sel_desc $now</b>");
-      echo "<div class=\"navbar\">";
+echo("<b>Mercury Device Manager $sel_domain $sel_desc $now</b>");
+echo "<div class=\"navbar\">";
 
-      echo "<a href=\"manager.php?do=add_domain\">Add Domain</a>";
+    echo "<a href=\"manager.php?do=add_domain\">Add Domain</a>";
 
-        echo "<div class=\"dropdown\">
-            <button class=\"dropbtn\">Select Domain
-              <i class=\"fa fa-caret-down\"></i>
-            </button>
-            <div class=\"dropdown-content\">
-            ";
-
-            $do = 'ls *.domain > domain.list';
-            system($do);
-            $file = fopen('domain.list', "r");
-            if ($file)
-            {
-              {
-                $line = fgets($file);
-                if (strlen($line) > 2)
+    echo "<div class=\"dropdown\">
+             <button class=\"dropbtn\">Select Domain
+             <i class=\"fa fa-caret-down\"></i>
+             </button>
+             <div class=\"dropdown-content\">
+             ";
+                $do = 'ls *.domain > domain.list';
+                system($do);
+                $file = fopen('domain.list', "r");
+                if ($file)
                 {
-                    $line = trim($line);
-                    $domain = str_replace(".domain", "", $line);
-                    echo "<a href=manager.php?do=select&domain=$domain>$domain</a>";
+                  {
+                    $line = fgets($file);
+                    if (strlen($line) > 2)
+                    {
+                       $line = trim($line);
+                       $domain = str_replace(".domain", "", $line);
+                       echo "<a href=manager.php?do=select&domain=$domain>$domain</a>";
+                    }
+                  }
                 }
-              }
-            }
-            echo "</div></div>";
+     echo "</div></div>";
 
-            echo "<div class=\"dropdown\">
-                  <button class=\"dropbtn\">Select Device
-                    <i class=\"fa fa-caret-down\"></i>
-                  </button>
-                  <div class=\"dropdown-content\">
-                  ";
-
-                  $request = 'http://'.$sel_domain."/gateway.php?do=list_devices";
-                  //echo $request;
-                  $ctx = stream_context_create(array('http'=>
+     echo "<div class=\"dropdown\">
+               <button class=\"dropbtn\">Select Device
+               <i class=\"fa fa-caret-down\"></i>
+               </button>
+               <div class=\"dropdown-content\">
+               ";
+                   $request = 'http://'.$sel_domain."/gateway.php?do=list_devices";
+                   //echo $request;
+                   $ctx = stream_context_create(array('http'=>
                    array(
                      'timeout' => 2,  //2 Seconds
                        )
                      ));
-                  $res = file_get_contents($request,false,$ctx);
-                  $data = explode(":",$res);
-                  $num = count($data);
+                   $res = file_get_contents($request,false,$ctx);
+                   $data = explode(":",$res);
+                   $num = count($data);
 
-                  for ($ii = 0; $ii < $num; $ii++)
-                  {
-                    $device = str_replace(".reg", "", $data[$ii]);
-                    if (strlen($device) > 2)
-                    {
-                        $doc = 'http://'.$sel_domain.'/devices/'.$device;
-                        $desc = getDesc($doc);
-                        echo "<a style=\"background: cornsilk;\" href=manager.php?do=select&device=$device>$desc</a>";
-                     }
+                   for ($ii = 0; $ii < $num; $ii++)
+                   {
+                      $device = str_replace(".reg", "", $data[$ii]);
+                      if (strlen($device) > 2)
+                      {
+                          $doc = 'http://'.$sel_domain.'/devices/'.$device;
+                          $desc = getDesc($doc);
+                          echo "<a style=\"background: cornsilk;\" href=manager.php?do=select&device=$device>$desc</a>";
+                      }
                    }
-          echo "</div></div>";
+      echo "</div></div>";
 
       echo "<a href=\"manager.php?do=send_action\">Send Action</a>";
 
       echo "<div class=\"dropdown\">
-            <button class=\"dropbtn\">Delete
-              <i class=\"fa fa-caret-down\"></i>
-            </button>
-            <div class=\"dropdown-content\">
-            ";
-              
-      echo "<a href=manager.php?do=delete&what=domain>$sel_domain</a>";
-      echo "<a href=manager.php?do=delete&what=device>$sel_desc</a>";
-      echo "<a href=manager.php?do=delete&what=log>clear log $sel_desc</a>";
+               <button class=\"dropbtn\">Delete
+               <i class=\"fa fa-caret-down\"></i>
+               </button>
+               <div class=\"dropdown-content\">
+               ";            
+                   echo "<a href=manager.php?do=delete&what=domain>$sel_domain</a>";
+                   echo "<a href=manager.php?do=delete&what=device>$sel_desc</a>";
+                   echo "<a href=manager.php?do=delete&what=log>clear log $sel_desc</a>";
       echo "</div></div>";
-
-      echo "<div class=\"dropdown\">
-      <button class=\"dropbtn\">Mapping
-        <i class=\"fa fa-caret-down\"></i>
-      </button>
-      <div class=\"dropdown-content\">
-      ";
       
       echo "<a href=\"status.php\" target=\"_blank\">Status</a>";
 
