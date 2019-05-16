@@ -9,6 +9,8 @@
 // http://iot.domain.com/gateway?id=123&no=123&do=config/meta/payload&json={}
 // Log
 // http://iot.domain.com/gateway?id=123&no=123&do=log&log=sdfdfdfg
+// Ping
+// http://iot.domain.com/gateway?id=123&no=123&do=ping
 // Feedback
 // Add fb = 1 to GET request
 // http://iot.domain.com/gateway?id=123&no=123&do=ping&fb=1
@@ -323,6 +325,11 @@ if (isset($_GET['do'])) // Mandatory
     {
        $obj->error = saveLog($obj);
        errorManagement($obj);
+    }
+    
+    if ($obj->do == 'ping')
+    {
+       echo "ok";
     }
 
     if ($obj->do == 'config' || $obj->do == 'meta' || $obj->do == 'payload')
