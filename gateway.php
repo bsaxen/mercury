@@ -177,7 +177,7 @@ function readFeedbackFile($fb_file)
       while(! feof($file))
       {
         $line = fgets($file);
-        //sscanf($line,"%s",$work);
+        $line = trim($line);
         $result = $result.$line;
       }
       fclose($file);
