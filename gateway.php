@@ -14,6 +14,10 @@
 // Feedback
 // Add fb = 1 to GET request
 // http://iot.domain.com/gateway?id=123&no=123&do=ping&fb=1
+// Feedback file format
+// [n]:message:
+// n = number of pending feedback files
+// message = the message to the device 
 //=============================================
 // Library
 class model {
@@ -197,7 +201,6 @@ function feedback($id)
 {
   $result = ' ';
   $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
-  //echo $do;
   system($do);
   $list_file = 'devices/'.$id.'/feedback.work';
   $no_of_lines = count(file($list_file));
@@ -206,14 +209,13 @@ function feedback($id)
   {
       // Read first line only
       $line = fgets($file);
-      //echo "line:".$line;
       if (strlen($line) > 2)
       {
           $line = trim($line);
-          //$line = 'devices/'.$line;
           $result = readFeedbackFile($line);
       }
   }
+  $no_of_lines = $no_of_lines - 1;
   $result = "[$no_of_lines]".$result;
   return $result;
 }
