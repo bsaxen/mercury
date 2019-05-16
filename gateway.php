@@ -1,7 +1,7 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-05-15
+// Date.......: 2019-05-16
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
@@ -9,8 +9,9 @@
 // http://iot.domain.com/gateway?id=123&no=123&do=config/meta/payload&json={}
 // Log
 // http://iot.domain.com/gateway?id=123&no=123&do=log&log=sdfdfdfg
-// Ping
-// http://iot.domain.com/gateway?id=123&no=123&do=ping
+// Feedback
+// Add fb = 1 to GET request
+// http://iot.domain.com/gateway?id=123&no=123&do=ping&fb=1
 //=============================================
 // Library
 class model {
@@ -323,18 +324,16 @@ if (isset($_GET['do'])) // Mandatory
        $obj->error = saveLog($obj);
        errorManagement($obj);
     }
-    
-    if ($obj->do == 'ping')
-    {
-       echo feedback($obj->id);
-       errorManagement($obj);
-    }
 
     if ($obj->do == 'config' || $obj->do == 'meta' || $obj->do == 'payload')
     {
        $obj->error = $publish($obj);
-       echo feedback($obj->id);
        errorManagement($obj);
+    }
+    
+    if (isset($_GET['fb'])) // Not mandatory
+    {
+      echo feedback($obj->id);
     }
 
 } // do
