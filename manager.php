@@ -203,7 +203,7 @@ function sendMessage($url,$device,$msg,$tag)
 //=============================================
 {
   echo "Send message $msg tag=$tag to $url/$device<br>";
-  $call = 'http://'.$url.'/gateway.php?do=feedback&id='.$device.'&msg='.$msg.'&tag='.$tag;
+  $call = 'http://'.$url.'/service.php?do=feedback&id='.$device.'&msg='.$msg.'&tag='.$tag;
   $res = file_get_contents($call);
 }
 //=============================================
