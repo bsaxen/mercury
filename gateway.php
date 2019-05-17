@@ -1,7 +1,7 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-05-16
+// Date.......: 2019-05-17
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
@@ -22,14 +22,16 @@
 // Library
 class model {
     public $sys_ts;
+    public $semantic;
     public $id;
     public $no;
     public $do;
     public $msg;
+    public $error;
 }
 
 $obj = new model();
-
+$obj->error = "NO_ERROR";
 //=============================================
 $date         = date_create();
 $obj->sys_ts  = date_format($date, 'Y-m-d H:i:s');
@@ -64,12 +66,15 @@ function systemWarning($msg)
 function errorManagement($obj)
 //=============================================
 {
-  $f_file = 'errors.txt';
-  $doc = fopen($f_file, "a");
-  if ($doc)
+  if ($obj->error != "NO_ERROR")
   {
+    $f_file = 'errors.txt';
+    $doc = fopen($f_file, "a");
+    if ($doc)
+    {
         fwrite($doc, "$obj->sys_ts $obj->id $obj->no $obj->do $obj->error\n");
         fclose($doc);
+    }
   }
   return;
 }
@@ -221,16 +226,6 @@ function feedback($id)
 }
 
 //=============================================
-function listAllFeedback($id)
-//=============================================
-{
-  $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
-  system($do);
-  $list_file = 'devices/'.$id.'/feedback.work';
-  $no_of_lines = count(file($list_file));
-  echo $no_of_lines;
-}
-//=============================================
 function publish($obj)
 //=============================================
 {
@@ -254,6 +249,10 @@ function publish($obj)
   else
   {
      $error = "ERROR_PUBLISH"; 
+  }
+  if ($obj->semantic == 1)
+  {
+    // Do something   
   }
   return $error;
 }
