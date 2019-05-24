@@ -36,27 +36,27 @@ $date         = date_create();
 $obj->sys_ts  = date_format($date, 'Y-m-d H:i:s');
 
 //=============================================
-function systemError($msg)
+function systemError($obj)
 //=============================================
 {
   $f_file = 'system_errors.txt';
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$obj->sys_ts $msg\n");
+        fwrite($doc, "$obj->sys_ts $obj->id $obj->msg\n");
         fclose($doc);
   }
   return;
 }
 //=============================================
-function systemWarning($msg)
+function systemWarning($obj)
 //=============================================
 {
   $f_file = 'system_warnings.txt';
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$obj->sys_ts $msg\n");
+        fwrite($doc, "$obj->sys_ts $obj->id $obj->msg\n");
         fclose($doc);
   }
   return;
@@ -271,9 +271,15 @@ if (isset($_GET['do'])) // Mandatory
         
       $ok = 0;
       $dir = 'devices/'.$obj->id;
-      if (is_dir($dir)) $ok++;
+      if (is_dir($dir))
+      {
+        $ok++;
+      } 
       $file = 'register/'.$obj->id.'.reg';
-      if (file_exists($file)) $ok++;
+      if (file_exists($file))
+      {
+        $ok++;
+      } 
 
       if ($ok == 0) // New device - register!
       {
@@ -296,13 +302,15 @@ if (isset($_GET['do'])) // Mandatory
         
       if ($ok == 1) // un-complete register
       {
-        systemError("Gateway Error: device registration not complete");
+        $obj->msg = "Gateway Error: device registration not complete"; 
+        systemError($obj);
         exit();
       }
     }
     else
     {
-      systemError("Gateway Error: no device id");
+      $obj->msg = "Gateway Error: no device id";
+      systemError($obj);
       exit();
     }
 
@@ -312,9 +320,9 @@ if (isset($_GET['do'])) // Mandatory
       $missed = $new_no - $obj->no; 
       if ($missed != 1)
       {
-          $format = 'device %s missed messages %d \n';
-          $msg = sprintf($format, $obj->id, $missed); 
-          systemWarning($msg);
+          $format = 'device %s missed messages %d';
+          $obj->msg = sprintf($format, $obj->id, $missed); 
+          systemWarning($obj);
       }
     }
 
@@ -331,7 +339,7 @@ if (isset($_GET['do'])) // Mandatory
 
     if ($obj->do == 'config' || $obj->do == 'meta' || $obj->do == 'payload')
     {
-       $obj->error = $publish($obj);
+       $obj->error = publish($obj);
        errorManagement($obj);
     }
     
