@@ -1,7 +1,7 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-05-17
+// Date.......: 2019-05-24
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
@@ -22,7 +22,6 @@
 // Library
 class model {
     public $sys_ts;
-    public $semantic;
     public $id;
     public $no;
     public $do;
@@ -250,10 +249,7 @@ function publish($obj)
   {
      $error = "ERROR_PUBLISH"; 
   }
-  if ($obj->semantic == 1)
-  {
-    // Do something   
-  }
+    
   return $error;
 }
 
