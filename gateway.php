@@ -1,7 +1,7 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-05-24
+// Date.......: 2019-06-04
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
@@ -82,7 +82,7 @@ function initLog($obj)
 //=============================================
 {
   $error = "NO_ERROR";
-  $f_file = 'devices/'.$obj->id.'/log.txt';
+  $f_file = 'work/client/'.$obj->id.'/log.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -100,7 +100,7 @@ function initNo($obj)
 //=============================================
 {
   $error = "NO_ERROR";
-  $f_file = 'devices/'.$obj->id.'/no.txt';
+  $f_file = 'work/client/'.$obj->id.'/no.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -120,7 +120,7 @@ function saveLog($obj)
   $error = "NO_ERROR";
   $log   = $_GET['log'];
   $log   = str_replace(" ","_",$log);  
-  $f_file = 'devices/'.$obj->id.'/log.txt';
+  $f_file = 'work/client/'.$obj->id.'/log.txt';
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -139,7 +139,7 @@ function writeNo($obj)
 //=============================================
 {
   $error = "NO_ERROR";
-  $f_file = 'devices/'.$obj->id.'/no.txt';
+  $f_file = 'work/client/'.$obj->id.'/no.txt';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -157,7 +157,7 @@ function readNo($obj)
 //=============================================
 {
   $error = "NO_ERROR";
-  $file = 'devices/'.$obj->id.'/no.txt';
+  $file = 'work/client/'.$obj->id.'/no.txt';
   if ($file)
   {
       while(!feof($file))
@@ -204,9 +204,9 @@ function feedback($id)
 //=============================================
 {
   $result = ' ';
-  $do = "ls devices/".$id."/"."*.feedback > devices/".$id."/feedback.work";
+  $do = "ls work/client/".$id."/"."*.feedback > devices/".$id."/feedback.work";
   system($do);
-  $list_file = 'devices/'.$id.'/feedback.work';
+  $list_file = 'work/client/'.$id.'/feedback.work';
   $no_of_lines = count(file($list_file));
   $file = fopen($list_file, "r");
   if ($file)
@@ -234,7 +234,7 @@ function publish($obj)
       $obj->msg = $_GET['json'];
   }
     
-  $f_file = 'devices/'.$obj->id.'/'.$obj->do.'.json';
+  $f_file = 'work/client/'.$obj->id.'/'.$obj->do.'.json';
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -270,12 +270,12 @@ if (isset($_GET['do'])) // Mandatory
       $obj->id  = str_replace(":","_",$obj->id);
         
       $ok = 0;
-      $dir = 'devices/'.$obj->id;
+      $dir = 'work/client/'.$obj->id;
       if (is_dir($dir))
       {
         $ok++;
       } 
-      $file = 'register/'.$obj->id.'.reg';
+      $file = 'work/register/'.$obj->id.'.reg';
       if (file_exists($file))
       {
         $ok++;
@@ -286,13 +286,13 @@ if (isset($_GET['do'])) // Mandatory
          mkdir($dir, 0777, true);
 
         // Create register directory if not exist
-        $dir = 'register';
+        $dir = 'work/register';
         if (!is_dir($dir))
         {
            mkdir($dir, 0777, true);
         }
           
-        $filename = 'register/'.$obj->id.'.reg';
+        $filename = 'work/register/'.$obj->id.'.reg';
         $doc = fopen($filename, "w");
         fwrite($doc, "$gs_ts $ts $obj->id");
         fclose($doc);
@@ -302,7 +302,7 @@ if (isset($_GET['do'])) // Mandatory
         
       if ($ok == 1) // un-complete register
       {
-        $obj->msg = "Gateway Error: device registration not complete"; 
+        $obj->msg = "Gateway Error: client registration not complete"; 
         systemError($obj);
         exit();
       }
@@ -320,7 +320,7 @@ if (isset($_GET['do'])) // Mandatory
       $missed = $new_no - $obj->no; 
       if ($missed != 1)
       {
-          $format = 'device %s missed messages %d';
+          $format = 'client %s missed messages %d';
           $obj->msg = sprintf($format, $obj->id, $missed); 
           systemWarning($obj);
       }
