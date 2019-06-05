@@ -1,9 +1,9 @@
 <?php
 //=============================================
 // File.......: triplet.php
-// Date.......: 2019-06-05
+// Date.......: 2019-06-06
 // Author.....: Benny Saxen
-// Description: Mercury Gateway
+// Description: 
 //=============================================
 class triplet {
     public $subject;
@@ -32,7 +32,7 @@ function addTerm($term)
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$term->index,$term->word\n");
+        fwrite($doc, "$term->index $term->word\n");
         fclose($doc);
   }
   return;
@@ -46,7 +46,7 @@ function addTriplet($obj)
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        fwrite($doc, "$obj->subject,$obj->predicate,$obj->object\n");
+        fwrite($doc, "$obj->subject $obj->predicate $obj->object\n");
         fclose($doc);
   }
   return;
@@ -98,7 +98,7 @@ function listAllTriplets($vo)
       if (strlen($line) > 2)
       {
         $s = 0;$o = 0; $p = 0;
-        sscanf($line, "%d,%d,%d", $ix_s,$ix_p,$ix_o );
+        sscanf($line, "%d %d %d", $ix_s,$ix_p,$ix_o );
         $t1 = $vocx[$ix_s];
         $t2 = $vocx[$ix_p];
         $t3 = $vocx[$ix_o];
