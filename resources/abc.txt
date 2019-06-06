@@ -1,0 +1,14 @@
+1 class
+2 subClassOf
+3 type
+4 property
+5 subPropertyOf
+6 sameAs
+7 inverseOf
+8 domain
+9 range
+101 human
+102 male
+103 female
+1001 benny
+1002 tina
