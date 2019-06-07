@@ -2,7 +2,7 @@
 session_start();
 //=============================================
 // File.......: triplet.php
-// Date.......: 2019-06-06
+// Date.......: 2019-06-07
 // Author.....: Benny Saxen
 // Description: 
 //=============================================
@@ -24,6 +24,8 @@ $m_sub = array();
 $m_pre = array();
 $m_obj = array();
 $do = '';
+$file_abc = 'resources/abc.txt';
+$file_rdf = 'resources/storage.rdf';
 //=============================================
 // Start of library
 //=============================================
@@ -36,7 +38,7 @@ function addTerm($term)
 //=============================================
 {
   echo "Add term to vocabulary";
-  $f_file = 'abc.txt';
+  $f_file = $file_abc;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -50,7 +52,7 @@ function addTriplet($obj)
 //=============================================
 {
   echo "Add triplet to storage";
-  $f_file = 'storage.rdf';
+  $f_file = $file_rdf;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -65,7 +67,7 @@ function deleteTriplet($row_number)
 {
   $ok = 0;
   $filename1 = 'temp.txt';
-  $filename2 = 'storage.rdf';
+  $filename2 = $file_rdf;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -83,7 +85,7 @@ function deleteTriplet($row_number)
   fclose($fh2);
   if ($ok == 1)
   {
-      system("cp -f temp.txt storage.rdf");
+      system("cp -f temp.txt $file_rdf");
   }
 }
 //=============================================
@@ -92,7 +94,7 @@ function deleteTerm($row_number)
 {
   $ok = 0;
   $filename1 = 'temp.txt';
-  $filename2 = 'abc.txt';
+  $filename2 = $file_abc;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -110,7 +112,7 @@ function deleteTerm($row_number)
   fclose($fh2);
   if ($ok == 1)
   {
-      system("cp -f temp.txt abc.txt");
+      system("cp -f temp.txt $file_abc");
   }
 }
 //=============================================
@@ -139,7 +141,7 @@ function listAllTriplets($vo)
   global $number_of_triplets;
   global $m_sub,$m_obj;
 
-  $file = fopen('storage.rdf', "r");
+  $file = fopen($file_rdf, "r");
   if ($file)
   {
     $row_number = 0;
@@ -166,6 +168,7 @@ function listAllTriplets($vo)
         echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$row_number\"> X </a></td></tr>";
       }
     }
+    fclose($file);
     $number_of_triplets = $row_number - 1;
     echo("</table> $number_of_triplets");
     $_SESSION["number_of_triplets"] = $number_of_triplets;
@@ -176,7 +179,7 @@ function listAllTriplets($vo)
 function listAllTerms()
 //=============================================
 {
-  $file = fopen('abc.txt', "r");
+  $file = fopen($file_abc, "r");
   if ($file)
   {
     $row_number = 0;
@@ -196,6 +199,7 @@ function listAllTerms()
       }
     }
     echo("</table>");
+    fclose($file);
   }
   return;
 }
@@ -214,6 +218,7 @@ function readVocabulary($voc)
       sscanf($line, "%d %s", $ix, $word);
       $vocx[$ix] = $word;
     }
+    fclose($file);
   }
   return;
 }
