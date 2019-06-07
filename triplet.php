@@ -66,7 +66,7 @@ function deleteTriplet($f_rdf,$row_number)
 //=============================================
 {
   $ok = 0;
-  $filename1 = 'temp.txt';
+  $filename1 = 'resources/temp.txt';
   $filename2 = $f_rdf;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
@@ -85,7 +85,7 @@ function deleteTriplet($f_rdf,$row_number)
   fclose($fh2);
   if ($ok == 1)
   {
-      system("cp -f temp.txt $file_rdf");
+      system("cp -f $filename1 $filename2");
   }
 }
 //=============================================
@@ -93,7 +93,7 @@ function deleteTerm($f_abc,$row_number)
 //=============================================
 {
   $ok = 0;
-  $filename1 = 'temp.txt';
+  $filename1 = 'resources/temp.txt';
   $filename2 = $f_abc;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
@@ -112,7 +112,7 @@ function deleteTerm($f_abc,$row_number)
   fclose($fh2);
   if ($ok == 1)
   {
-      system("cp -f temp.txt $file_abc");
+      system("cp -f $filename1 $filename2");
   }
 }
 //=============================================
@@ -226,8 +226,8 @@ function readVocabulary($f_abc)
 //=============================================
 // End of library
 //=============================================
-echo "<br>admin triplets $admin_triplets ";
-echo "admin terms $admin_terms current_node $current_node<br>";
+//echo "<br>admin triplets $admin_triplets ";
+//echo "admin terms $admin_terms current_node $current_node<br>";
 //=============================================
 // GET 
 //=============================================
@@ -375,9 +375,6 @@ readVocabulary($file_abc);
 echo "<br>";
 echo "<a href=\"triplet.php?doget=admin_triplets\"> Triplets</a>";
 echo "<a href=\"triplet.php?doget=admin_terms\"> Terms </a>";
-//$doc_voc = 'abc.txt';
-
-
 
 if ($admin_triplets == 1)
 {
