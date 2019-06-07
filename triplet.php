@@ -24,8 +24,8 @@ $m_sub = array();
 $m_pre = array();
 $m_obj = array();
 $do = '';
-$file_abc = '/resources/abc.txt';
-$file_rdf = '/resources/storage.rdf';
+$file_abc = 'resources/abc.txt';
+$file_rdf = 'resources/storage.rdf';
 //=============================================
 // Start of library
 //=============================================
