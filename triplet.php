@@ -34,11 +34,11 @@ $admin_terms    = $_SESSION["admin_terms"];
 $current_node   = $_SESSION["current_node"];
 $number_of_triplets = $_SESSION["number_of_triplets"];
 //=============================================
-function addTerm($term)
+function addTerm($f_abc,$term)
 //=============================================
 {
   echo "Add term to vocabulary";
-  $f_file = $file_abc;
+  $f_file = $f_abc;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -48,11 +48,11 @@ function addTerm($term)
   return;
 }
 //=============================================
-function addTriplet($obj)
+function addTriplet($f_rdf,$obj)
 //=============================================
 {
   echo "Add triplet to storage";
-  $f_file = $file_rdf;
+  $f_file = $f_rdf;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -62,12 +62,12 @@ function addTriplet($obj)
   return;
 }
 //=============================================
-function deleteTriplet($row_number)
+function deleteTriplet($f_rdf,$row_number)
 //=============================================
 {
   $ok = 0;
   $filename1 = 'temp.txt';
-  $filename2 = $file_rdf;
+  $filename2 = $f_rdf;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -89,12 +89,12 @@ function deleteTriplet($row_number)
   }
 }
 //=============================================
-function deleteTerm($row_number)
+function deleteTerm($f_abc,$row_number)
 //=============================================
 {
   $ok = 0;
   $filename1 = 'temp.txt';
-  $filename2 = $file_abc;
+  $filename2 = $f_abc;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -134,14 +134,14 @@ function listNodeNeighbours($node)
   return;
 }
 //=============================================
-function listAllTriplets($vo)
+function listAllTriplets($f_rdf)
 //=============================================
 {
   global $vocx;
   global $number_of_triplets;
   global $m_sub,$m_obj;
 
-  $file = fopen($file_rdf, "r");
+  $file = fopen($f_rdf, "r");
   if ($file)
   {
     $row_number = 0;
@@ -176,10 +176,11 @@ function listAllTriplets($vo)
   return;
 }
 //=============================================
-function listAllTerms()
+function listAllTerms($f_abc)
 //=============================================
 {
-  $file = fopen($file_abc, "r");
+  
+  $file = fopen($f_abc, "r");
   if ($file)
   {
     $row_number = 0;
@@ -204,11 +205,11 @@ function listAllTerms()
   return;
 }
 //=============================================
-function readVocabulary($voc)
+function readVocabulary($f_abc)
 //=============================================
 {
   global $vocx;
-  $file = fopen($voc, "r");
+  $file = fopen($f_abc, "r");
   if ($file)
   {
     while(!feof($file))
@@ -263,7 +264,7 @@ if (isset($_GET['doget'])) // Mandatory
        if (is_numeric($_GET['row']))
        {
            $row = $_GET['row'];
-           deleteTriplet($row);
+           deleteTriplet($file_rdf,$row);
        }
     }
 
@@ -272,7 +273,7 @@ if (isset($_GET['doget'])) // Mandatory
        if (is_numeric($_GET['row']))
        {
            $row = $_GET['row'];
-           deleteTerm($row);
+           deleteTerm($file_abc,$row);
        }
     }
 
@@ -297,7 +298,7 @@ if (isset($_GET['doget'])) // Mandatory
         }
         if($npar == 3)
         {
-            addTriplet($obj);
+            addTriplet($file_rdf,$obj);
         }
         else
         {
@@ -335,7 +336,7 @@ if (isset($_POST['dopost']))
       }
       if($npar == 3)
       {
-          addTriplet($obj);
+          addTriplet($file_rdf,$obj);
       }
       else
       {
@@ -357,7 +358,7 @@ if (isset($_POST['dopost']))
       }
       if($npar == 2)
       {
-          addTerm($term);
+          addTerm($file_abc,$term);
       }
       else
       {
@@ -366,7 +367,7 @@ if (isset($_POST['dopost']))
   }
 }
 
-readVocabulary('abc.txt');
+readVocabulary($file_abc);
 
 //=============================================
 // Front-End
@@ -390,7 +391,7 @@ if ($admin_triplets == 1)
   <td><input type= \"submit\" value=\"Create Triplet\"></td></tr>
   </form>
   </table>";
-  listAllTriplets($vocx);
+  listAllTriplets($file_rdf);
 }
 
 if ($admin_terms == 1)
@@ -404,7 +405,7 @@ echo "
   <td><input type= \"submit\" value=\"Create Term\"></td></tr>
 </form>
 </table>";
-listAllTerms();
+listAllTerms($file_abc);
 }
 
 listNodeNeighbours($current_node);
