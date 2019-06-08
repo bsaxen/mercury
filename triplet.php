@@ -19,13 +19,16 @@ class term {
 }
 $term = new term();
 
-$vocx = array();
+$vocx  = array();
 $m_sub = array();
 $m_pre = array();
 $m_obj = array();
+$m_3d  = array();
 $do = '';
 $file_abc = 'resources/abc.txt';
 $file_rdf = 'resources/storage.rdf';
+$g_class = 1;
+$g_type = 3;
 //=============================================
 // Start of library
 //=============================================
@@ -33,6 +36,26 @@ $admin_triplets = $_SESSION["admin_triplets"];
 $admin_terms    = $_SESSION["admin_terms"];
 $current_node   = $_SESSION["current_node"];
 $number_of_triplets = $_SESSION["number_of_triplets"];
+//=============================================
+function reasoning()
+//=============================================
+{
+  global $g_class,$g_type;
+  global $number_of_triplets;
+  global $m_sub,$m_3d;
+  echo "Reasoning";
+  for ($ii = 1; $ii <= $number_of_triplets; $ii++)
+  {
+    $ix = $m_sub[$ii];
+    if ($m_3d[$ix][$g_class][$g_type] == 1)
+    {
+        echo "<br>$ix is of type class";
+    }
+  }
+
+ 
+  return;
+}
 //=============================================
 function addTerm($f_abc,$term)
 //=============================================
@@ -139,7 +162,8 @@ function listAllTriplets($f_rdf)
 {
   global $vocx;
   global $number_of_triplets;
-  global $m_sub,$m_obj;
+  global $m_sub,$m_obj,$m_pre;
+  global $m_3d;
 
   $file = fopen($f_rdf, "r");
   if ($file)
@@ -160,6 +184,7 @@ function listAllTriplets($f_rdf)
         $m_sub[$row_number] = $ix_s;
         $m_pre[$row_number] = $ix_p;
         $m_obj[$row_number] = $ix_o;
+        $m_3d[$ix_s][$ix_o][$ix_p] = 1;
         $t1 = $vocx[$ix_s];
         $t2 = $vocx[$ix_p];
         $t3 = $vocx[$ix_o];
@@ -407,4 +432,7 @@ listAllTerms($file_abc);
 
 listNodeNeighbours($current_node);
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
+
+reasoning();
+
 ?>
