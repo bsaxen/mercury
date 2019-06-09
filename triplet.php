@@ -2,7 +2,7 @@
 session_start();
 //=============================================
 // File.......: triplet.php
-// Date.......: 2019-06-07
+// Date.......: 2019-06-09
 // Author.....: Benny Saxen
 // Description: 
 //=============================================
@@ -71,6 +71,26 @@ function addTerm($f_abc,$term)
   return;
 }
 //=============================================
+function randomTriplet($f_rdf,$range, $total)
+//=============================================
+{
+  echo "Add random triplet to storage";
+  $f_file = $f_rdf;
+  $doc = fopen($f_file, "a");
+  if ($doc)
+  {
+        for ($ii = 0; $ii < $total; $ii++)
+        {
+           $rand_sub = rand(1,$range);
+           $rand_obj = rand(1,$range);
+           $rand_pre = rand(1,$range);
+           fwrite($doc, "$rand_sub $rand_pre $rand_obj\n");
+        }
+        fclose($doc);
+  }
+  return;
+}
+//=============================================
 function addTriplet($f_rdf,$obj)
 //=============================================
 {
@@ -80,6 +100,19 @@ function addTriplet($f_rdf,$obj)
   if ($doc)
   {
         fwrite($doc, "$obj->subject $obj->predicate $obj->object\n");
+        fclose($doc);
+  }
+  return;
+}
+//=============================================
+function clearTriplet($f_rdf)
+//=============================================
+{
+  echo "Clear triplet storage";
+  $f_file = $f_rdf;
+  $doc = fopen($f_file, "w");
+  if ($doc)
+  {
         fclose($doc);
   }
   return;
@@ -160,6 +193,7 @@ function listNodeNeighbours($node)
 function listAllTriplets($f_rdf)
 //=============================================
 {
+  global $current_node;
   global $vocx;
   global $number_of_triplets;
   global $m_sub,$m_obj,$m_pre;
@@ -188,7 +222,21 @@ function listAllTriplets($f_rdf)
         $t1 = $vocx[$ix_s];
         $t2 = $vocx[$ix_p];
         $t3 = $vocx[$ix_o];
-        echo("<tr><td>$ix_s</td><td>$ix_p</td><td>$ix_o</td>");
+        if($current_node == $ix_s)
+            echo("<tr><td>$ix_s</td>");
+        else
+            echo("<tr><td><a href=\"triplet.php?doget=select_node&node=$ix_s\">$ix_s</a></td>");      
+        
+        if($current_node == $ix_p)
+            echo("<td>$ix_p</td>");
+        else
+            echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_p\">$ix_p</a></td>");
+
+        if($current_node == $ix_o)    
+            echo("<td>$ix_o</td>");
+        else
+            echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_o\">$ix_o</a></td>");
+
         echo("<td>$t1</td><td>$t2</td><td>$t3</td>");
         echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$row_number\"> X </a></td></tr>";
       }
@@ -248,6 +296,52 @@ function readVocabulary($f_abc)
   }
   return;
 }
+
+//=============================================
+function listObjectsForThisNode($node) // x = a
+//=============================================
+{
+  global $m_3d;
+  echo "<br>Adjacent Objects<br>";
+  for($yy=1;$yy<100;$yy++)
+  {
+    for($zz=1;$zz<100;$zz++)
+    {
+        $temp = $m_3d[$node][$yy][$zz];
+        if ($temp == 1) echo("$node --> $yy ($zz) <br>");
+    }
+  }
+}
+//=============================================
+function listSubjectsForThisNode($node) // y = b
+//=============================================
+{
+  global $m_3d;
+  echo "<br>Adjacent Subjects<br>";
+  for($xx=1;$xx<100;$xx++)
+  {
+    for($zz=1;$zz<100;$zz++)
+    {
+        $temp = $m_3d[$xx][$node][$zz];
+        if ($temp == 1) echo("$node <-- $xx ($zz) <br>");
+    }
+  }  
+}
+//=============================================
+function listNodesForThisPredicate($node) // z = c
+//=============================================
+{
+  global $m_3d;
+  echo "<br>Subjects and Objects using this predicate<br>";
+  for($xx=1;$xx<100;$xx++)
+  {
+    for($yy=1;$yy<100;$yy++)
+    {
+        $temp = $m_3d[$xx][$yy][$node];
+        if ($temp == 1) echo("$xx --($node)--> $yy <br>");
+    }
+  }  
+}
 //=============================================
 // End of library
 //=============================================
@@ -267,6 +361,7 @@ if (isset($_GET['doget'])) // Mandatory
            $current_node = $_GET['node'];
        }
     }
+
 
     if ($do == 'admin_triplets')
     {
@@ -291,6 +386,26 @@ if (isset($_GET['doget'])) // Mandatory
            $row = $_GET['row'];
            deleteTriplet($file_rdf,$row);
        }
+    }
+    if ($do == 'clear_triplet')
+    {
+        clearTriplet($file_rdf);
+    }
+
+    if ($do == 'random_triplet')
+    {
+       $npar = 0;
+       if (is_numeric($_GET['range']))
+       {
+           $npar++;
+           $range = $_GET['range'];
+       }
+       if (is_numeric($_GET['total']))
+       {
+           $npar++;
+           $total = $_GET['total'];
+       }
+       if ($npar == 2) randomTriplet($file_rdf,$range, $total);
     }
 
     if ($do == 'delete_term')
@@ -334,6 +449,7 @@ if (isset($_GET['doget'])) // Mandatory
 $_SESSION["admin_triplets"] = $admin_triplets;
 $_SESSION["admin_terms"] = $admin_terms;
 $_SESSION["current_node"] = $current_node;
+
 //=============================================
 // POST
 //=============================================
@@ -413,6 +529,8 @@ if ($admin_triplets == 1)
   <td><input type= \"submit\" value=\"Create Triplet\"></td></tr>
   </form>
   </table>";
+  echo "<a href=\"triplet.php?doget=random_triplet&range=100&total=10\"> Add random triplets </a>";
+  echo "<a href=\"triplet.php?doget=clear_triplet\"> Clear all triplets </a>";
   listAllTriplets($file_rdf);
 }
 
@@ -428,9 +546,12 @@ echo "
 </form>
 </table>";
 listAllTerms($file_abc);
+
 }
 
-listNodeNeighbours($current_node);
+listObjectsForThisNode($current_node); // x = a
+listSubjectsForThisNode($current_node); // y = b
+listNodesForThisPredicate($current_node); // z = c
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
 
 reasoning();
