@@ -40,7 +40,7 @@ $number_of_triplets = $_SESSION["number_of_triplets"];
 
 function myfunction($value, $key) 
 { 
-    echo "The key $key has the value $value \n"; 
+    echo "The key $key has the value $value<br>"; 
 } 
 //=============================================
 function reasoning()
@@ -48,11 +48,11 @@ function reasoning()
 {
   global $g_class,$g_type;
   global $number_of_triplets;
-  global $m_sub,$m_3d;
+  global $v_sub,$m_3d;
   echo "Reasoning";
   for ($ii = 1; $ii <= $number_of_triplets; $ii++)
   {
-    $ix = $m_sub[$ii];
+    $ix = $v_sub[$ii];
     if ($m_3d[$ix][$g_class][$g_type] == 1)
     {
         echo "<br>$ix is of type class";
@@ -182,14 +182,14 @@ function listNodeNeighbours($node)
 //=============================================
 {
   global $number_of_triplets;
-  global $m_sub,$m_obj;
+  global $v_sub,$v_obj;
 
   echo "<br><br>Neighbour Nodes<table border=0>";
   for ($ii = 1;$ii <= $number_of_triplets ;$ii++)
   {
-    if ($m_sub[$ii] == $node)
+    if ($v_sub[$ii] == $node)
     {
-      echo("<tr><td>$m_obj[$ii]</td></tr>");
+      echo("<tr><td>$v_obj[$ii]</td></tr>");
     }
   }
     echo("</table>");
@@ -202,15 +202,15 @@ function listAllTriplets()
   global $current_node;
   global $vocx;
   global $number_of_triplets;
-  global $m_sub,$m_obj,$m_pre;
+  global $v_sub,$v_obj,$v_pre;
   global $m_3d;
 
   echo("<table border=1>");
   for ($ii = 1; $ii <= $number_of_triplets;$ii++)
   {
-    $ix_s = $m_sub[$ii];
-    $ix_p = $m_pre[$ii];
-    $ix_o = $m_obj[$ii];
+    $ix_s = $v_sub[$ii];
+    $ix_p = $v_pre[$ii];
+    $ix_o = $v_obj[$ii];
     $t1 = $vocx[$ix_s];
     $t2 = $vocx[$ix_p];
     $t3 = $vocx[$ix_o];
@@ -219,7 +219,7 @@ function listAllTriplets()
         else
             echo("<tr><td><a href=\"triplet.php?doget=select_node&node=$ix_s\">$ix_s</a></td>");      
         
-        if($current_node == $ix_p)
+        if($current_node == $i_p)
             echo("<td>$ix_p</td>");
         else
             echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_p\">$ix_p</a></td>");
@@ -243,7 +243,7 @@ function update($f_rdf)
   global $current_node;
   global $vocx;
   global $number_of_triplets;
-  global $m_sub,$m_obj,$m_pre;
+  global $v_sub,$v_obj,$v_pre;
   global $m_3d;
 
   $file = fopen($f_rdf, "r");
@@ -260,9 +260,9 @@ function update($f_rdf)
       if (strlen($line) > 2)
       {
         sscanf($line, "%d %d %d", $ix_s,$ix_p,$ix_o );
-        $m_sub[$row_number] = $ix_s;
-        $m_pre[$row_number] = $ix_p;
-        $m_obj[$row_number] = $ix_o;
+        $v_sub[$row_number] = $ix_s;
+        $v_pre[$row_number] = $ix_p;
+        $v_obj[$row_number] = $ix_o;
         $m_3d[$ix_s][$ix_o][$ix_p] = 1;
       }
     }
@@ -326,40 +326,61 @@ function listObjectsForThisNode($node) // x = a
 //=============================================
 {
   global $m_3d;
+  global $dimension;
+  global $adj_obj;
   echo "<br>Adjacent Objects<br>";
-  for($yy=1;$yy<100;$yy++)
+  $counter = 0;
+  for($yy=1;$yy<=$dimension;$yy++)
   {
-    for($zz=1;$zz<100;$zz++)
+    for($zz=1;$zz<=$dimension;$zz++)
     {
         $temp = $m_3d[$node][$yy][$zz];
-        if ($temp == 1) echo("$node --> $yy ($zz) <br>");
+        if ($temp == 1) 
+        {
+          $counter ++;
+          echo("$node --> $yy ($zz) <br>");
+          $adj_obj[$counter] = $yy;
+        }
     }
   }
+  $adj_obj[0] = $counter;
+  echo "Number of adjacent objects: $counter<br>";
 }
 //=============================================
 function listSubjectsForThisNode($node) // y = b
 //=============================================
 {
   global $m_3d;
+  global $dimension;
+  global $adj_sub;
   echo "<br>Adjacent Subjects<br>";
-  for($xx=1;$xx<100;$xx++)
+  $counter = 0;
+  for($xx=1;$xx<=$dimension;$xx++)
   {
-    for($zz=1;$zz<100;$zz++)
+    for($zz=1;$zz<=$dimension;$zz++)
     {
         $temp = $m_3d[$xx][$node][$zz];
-        if ($temp == 1) echo("$node <-- $xx ($zz) <br>");
+        if ($temp == 1) 
+        {
+          $counter ++;
+          echo("$node <-- $xx ($zz) <br>");
+          $adj_sub[$counter] = $xx;
+        }
     }
   }  
+  $adj_sub[0] = $counter;
+  echo "Number of adjacent subjects: $counter<br>";
 }
 //=============================================
 function listNodesForThisPredicate($node) // z = c
 //=============================================
 {
   global $m_3d;
+  global $dimension;
   echo "<br>Subjects and Objects using this predicate<br>";
-  for($xx=1;$xx<100;$xx++)
+  for($xx=1;$xx<=$dimension;$xx++)
   {
-    for($yy=1;$yy<100;$yy++)
+    for($yy=1;$yy<=$dimension;$yy++)
     {
         $temp = $m_3d[$xx][$yy][$node];
         if ($temp == 1) echo("$xx --($node)--> $yy <br>");
@@ -373,13 +394,19 @@ function showMatrixA()
   global $m_3d;
   global $dimension;
   echo "<p class=\"mx\">";
-  for($xx=1;$xx<$dimension;$xx++)
+
+  for($xx=0;$xx<=$dimension;$xx++)
+  {
+    echo sprintf("%03d",$xx);
+  }
+  echo "<br>";
+  for($xx=1;$xx<=$dimension;$xx++)
   {
     echo sprintf("<br>%03d",$xx);
-    for($yy=1;$yy<$dimension;$yy++)
+    for($yy=1;$yy<=$dimension;$yy++)
     {
       $temp = 0;
-      for($zz=1;$zz<$dimension;$zz++)
+      for($zz=1;$zz<=$dimension;$zz++)
       {
         $val = $m_3d[$xx][$yy][$zz];
         if ($val == 1) $temp = $temp + $zz;
@@ -390,14 +417,19 @@ function showMatrixA()
           printf("&nbsp&nbsp.");
     }
   }  
-echo("<br>");
-  for($xx=1;$xx<$dimension;$xx++)
+  echo("<br><br>");
+  for($xx=0;$xx<=$dimension;$xx++)
+  {
+    echo sprintf("%03d",$xx);
+  }
+  echo "<br>";
+  for($xx=1;$xx<=$dimension;$xx++)
   {
     echo sprintf("<br>%03d",$xx);
-    for($yy=1;$yy<$dimension;$yy++)
+    for($yy=1;$yy<=$dimension;$yy++)
     {
       $temp = 0;
-      for($zz=1;$zz<$dimension;$zz++)
+      for($zz=1;$zz<=$dimension;$zz++)
       {
         $val = $m_3d[$xx][$yy][$zz];
         if ($val == 1) $temp = $temp + $val;
@@ -636,10 +668,10 @@ listNodesForThisPredicate($current_node); // z = c
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
 
 reasoning();
-$arr = array("a"=>"yellow", "b"=>"pink", "c"=>"purple"); 
+//$arr = array("a"=>"yellow", "b"=>"pink", "c"=>"purple"); 
   
 // calling array_walk() with no extra parameter 
-array_walk($arr, "myfunction"); 
+//array_walk($vocx, "myfunction"); 
 ?>
 </body>
 </html>
