@@ -29,6 +29,7 @@ $file_abc = 'resources/abc.txt';
 $file_rdf = 'resources/storage.rdf';
 $g_class = 1;
 $g_type = 3;
+$dimension = 20;
 //=============================================
 // Start of library
 //=============================================
@@ -36,6 +37,11 @@ $admin_triplets = $_SESSION["admin_triplets"];
 $admin_terms    = $_SESSION["admin_terms"];
 $current_node   = $_SESSION["current_node"];
 $number_of_triplets = $_SESSION["number_of_triplets"];
+
+function myfunction($value, $key) 
+{ 
+    echo "The key $key has the value $value \n"; 
+} 
 //=============================================
 function reasoning()
 //=============================================
@@ -190,7 +196,7 @@ function listNodeNeighbours($node)
   return;
 }
 //=============================================
-function listAllTriplets($f_rdf)
+function listAllTriplets()
 //=============================================
 {
   global $current_node;
@@ -199,29 +205,15 @@ function listAllTriplets($f_rdf)
   global $m_sub,$m_obj,$m_pre;
   global $m_3d;
 
-  $file = fopen($f_rdf, "r");
-  if ($file)
+  echo("<table border=1>");
+  for ($ii = 1; $ii <= $number_of_triplets;$ii++)
   {
-    $row_number = 0;
-    echo "<table border=1>";
-    while(!feof($file))
-    {
-      $row_number++;
-      $t1 = '-';
-      $t2 = '-';
-      $t3 = '-';
-      $line = fgets($file);
-      if (strlen($line) > 2)
-      {
-        $s = 0;$o = 0; $p = 0;
-        sscanf($line, "%d %d %d", $ix_s,$ix_p,$ix_o );
-        $m_sub[$row_number] = $ix_s;
-        $m_pre[$row_number] = $ix_p;
-        $m_obj[$row_number] = $ix_o;
-        $m_3d[$ix_s][$ix_o][$ix_p] = 1;
-        $t1 = $vocx[$ix_s];
-        $t2 = $vocx[$ix_p];
-        $t3 = $vocx[$ix_o];
+    $ix_s = $m_sub[$ii];
+    $ix_p = $m_pre[$ii];
+    $ix_o = $m_obj[$ii];
+    $t1 = $vocx[$ix_s];
+    $t2 = $vocx[$ix_p];
+    $t3 = $vocx[$ix_o];
         if($current_node == $ix_s)
             echo("<tr><td>$ix_s</td>");
         else
@@ -238,12 +230,44 @@ function listAllTriplets($f_rdf)
             echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_o\">$ix_o</a></td>");
 
         echo("<td>$t1</td><td>$t2</td><td>$t3</td>");
-        echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$row_number\"> X </a></td></tr>";
+        echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td></tr>";
+    }
+    fclose($file);
+    echo("</table>");
+  return;
+}
+//=============================================
+function update($f_rdf)
+//=============================================
+{
+  global $current_node;
+  global $vocx;
+  global $number_of_triplets;
+  global $m_sub,$m_obj,$m_pre;
+  global $m_3d;
+
+  $file = fopen($f_rdf, "r");
+  if ($file)
+  {
+    $row_number = 0;
+    while(!feof($file))
+    {
+      $row_number++;
+      $t1 = '-';
+      $t2 = '-';
+      $t3 = '-';
+      $line = fgets($file);
+      if (strlen($line) > 2)
+      {
+        sscanf($line, "%d %d %d", $ix_s,$ix_p,$ix_o );
+        $m_sub[$row_number] = $ix_s;
+        $m_pre[$row_number] = $ix_p;
+        $m_obj[$row_number] = $ix_o;
+        $m_3d[$ix_s][$ix_o][$ix_p] = 1;
       }
     }
     fclose($file);
     $number_of_triplets = $row_number - 1;
-    echo("</table> $number_of_triplets");
     $_SESSION["number_of_triplets"] = $number_of_triplets;
   }
   return;
@@ -341,6 +365,50 @@ function listNodesForThisPredicate($node) // z = c
         if ($temp == 1) echo("$xx --($node)--> $yy <br>");
     }
   }  
+}
+//=============================================
+function showMatrixA()
+//=============================================
+{
+  global $m_3d;
+  global $dimension;
+  echo "<p class=\"mx\">";
+  for($xx=1;$xx<$dimension;$xx++)
+  {
+    echo sprintf("<br>%03d",$xx);
+    for($yy=1;$yy<$dimension;$yy++)
+    {
+      $temp = 0;
+      for($zz=1;$zz<$dimension;$zz++)
+      {
+        $val = $m_3d[$xx][$yy][$zz];
+        if ($val == 1) $temp = $temp + $zz;
+      }
+      if ($temp != 0) 
+          echo sprintf("%03d",$temp);
+      else
+          printf("&nbsp&nbsp.");
+    }
+  }  
+echo("<br>");
+  for($xx=1;$xx<$dimension;$xx++)
+  {
+    echo sprintf("<br>%03d",$xx);
+    for($yy=1;$yy<$dimension;$yy++)
+    {
+      $temp = 0;
+      for($zz=1;$zz<$dimension;$zz++)
+      {
+        $val = $m_3d[$xx][$yy][$zz];
+        if ($val == 1) $temp = $temp + $val;
+      }
+      if ($temp != 0) 
+          echo sprintf("%03d",$temp);
+      else
+          printf("&nbsp&nbsp.");
+    }
+  }  
+  echo("</p>");
 }
 //=============================================
 // End of library
@@ -509,10 +577,23 @@ if (isset($_POST['dopost']))
 }
 
 readVocabulary($file_abc);
-
+update($file_rdf);
 //=============================================
 // Front-End
 //=============================================
+echo("<html>");
+echo("<head>");
+
+echo("<style>
+.mx {
+  font-size: 10px;
+  font-family: monospace;
+}
+</style>");
+
+echo("</head>");
+echo("<body>");
+
 echo "<br>";
 echo "<a href=\"triplet.php?doget=admin_triplets\"> Triplets</a>";
 echo "<a href=\"triplet.php?doget=admin_terms\"> Terms </a>";
@@ -529,11 +610,11 @@ if ($admin_triplets == 1)
   <td><input type= \"submit\" value=\"Create Triplet\"></td></tr>
   </form>
   </table>";
-  echo "<a href=\"triplet.php?doget=random_triplet&range=100&total=10\"> Add random triplets </a>";
-  echo "<a href=\"triplet.php?doget=clear_triplet\"> Clear all triplets </a>";
+
   listAllTriplets($file_rdf);
 }
-
+echo "<a href=\"triplet.php?doget=random_triplet&range=$dimension&total=10\"> Add random triplets </a>";
+echo "<a href=\"triplet.php?doget=clear_triplet\"> Clear all triplets </a>";
 if ($admin_terms == 1)
 {
 echo "<table border=0>";
@@ -548,12 +629,17 @@ echo "
 listAllTerms($file_abc);
 
 }
-
+showMatrixA();
 listObjectsForThisNode($current_node); // x = a
 listSubjectsForThisNode($current_node); // y = b
 listNodesForThisPredicate($current_node); // z = c
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
 
 reasoning();
-
+$arr = array("a"=>"yellow", "b"=>"pink", "c"=>"purple"); 
+  
+// calling array_walk() with no extra parameter 
+array_walk($arr, "myfunction"); 
 ?>
+</body>
+</html>
