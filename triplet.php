@@ -24,12 +24,14 @@ $m_sub = array();
 $m_pre = array();
 $m_obj = array();
 $m_3d  = array();
+$v_error = array();
+
 $do = '';
 $file_abc = 'resources/abc.txt';
 $file_rdf = 'resources/storage.rdf';
 $g_class = 1;
 $g_type = 3;
-$dimension = 20;
+$dimension = 10;
 //=============================================
 // Start of library
 //=============================================
@@ -202,24 +204,28 @@ function listAllTriplets()
   global $current_node;
   global $vocx;
   global $number_of_triplets;
-  global $v_sub,$v_obj,$v_pre;
+  global $v_sub,$v_obj,$v_pre,$v_error;
   global $m_3d;
+  global $dimension;
 
-  echo("<table border=1>");
+  echo("<p style=\"color:red;font-family:monospace;font-size: 10px;\"><table border=1>");
   for ($ii = 1; $ii <= $number_of_triplets;$ii++)
   {
-    $ix_s = $v_sub[$ii];
-    $ix_p = $v_pre[$ii];
-    $ix_o = $v_obj[$ii];
-    $t1 = $vocx[$ix_s];
-    $t2 = $vocx[$ix_p];
-    $t3 = $vocx[$ix_o];
+        $ix_s = $v_sub[$ii];
+        $ix_p = $v_pre[$ii];
+        $ix_o = $v_obj[$ii];
+        $ix_e = $v_error[$ii];
+
+        $t1 = $vocx[$ix_s];
+        $t2 = $vocx[$ix_p];
+        $t3 = $vocx[$ix_o];
+
         if($current_node == $ix_s)
             echo("<tr><td>$ix_s</td>");
         else
-            echo("<tr><td><a href=\"triplet.php?doget=select_node&node=$ix_s\">$ix_s</a></td>");      
+            echo("<tr><td><a href=\"triplet.php?doget=select_node&node=$ix_s\">$ix_s</a></td>");  
         
-        if($current_node == $i_p)
+        if($current_node == $ix_p)
             echo("<td>$ix_p</td>");
         else
             echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_p\">$ix_p</a></td>");
@@ -230,10 +236,18 @@ function listAllTriplets()
             echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_o\">$ix_o</a></td>");
 
         echo("<td>$t1</td><td>$t2</td><td>$t3</td>");
-        echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td></tr>";
+        if ($ix_s > $dimension || $ix_o > $dimension)
+          echo "<td><a style=\"color:red;\" href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td>";
+        else 
+          echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td>";
+
+        if ($ix_e == 0)
+          echo("<td>ok</td></tr>");  
+        else
+          echo("<td>duplicates $ix_e</td></tr>"); 
     }
     fclose($file);
-    echo("</table>");
+    echo("</table></p>");
   return;
 }
 //=============================================
@@ -245,6 +259,7 @@ function update($f_rdf)
   global $number_of_triplets;
   global $v_sub,$v_obj,$v_pre;
   global $m_3d;
+  global $v_error;
 
   $file = fopen($f_rdf, "r");
   if ($file)
@@ -263,7 +278,15 @@ function update($f_rdf)
         $v_sub[$row_number] = $ix_s;
         $v_pre[$row_number] = $ix_p;
         $v_obj[$row_number] = $ix_o;
-        $m_3d[$ix_s][$ix_o][$ix_p] = 1;
+        if ($m_3d[$ix_s][$ix_o][$ix_p] == 0)
+        {
+          $m_3d[$ix_s][$ix_o][$ix_p] = 1;
+          $v_error[$row_number] = 0;
+        }
+        else
+        {
+          $v_error[$row_number]++;
+        }
       }
     }
     fclose($file);
@@ -276,12 +299,13 @@ function update($f_rdf)
 function listAllTerms($f_abc)
 //=============================================
 {
-  
+  global $dimension;
+
   $file = fopen($f_abc, "r");
   if ($file)
   {
     $row_number = 0;
-    echo "<table border=1>";
+    echo "<p style=\"color:red;font-family:monospace;font-size: 10px;\"><table border=1>";
     while(!feof($file))
     {
       $row_number++;
@@ -293,7 +317,10 @@ function listAllTerms($f_abc)
       {
         sscanf($line, "%d %s", $ix,$term);
         echo("<tr><td>$ix</td><td><a href=\"triplet.php?doget=select_node&node=$ix\">$term</a></td>");
-        echo "<td><a href=\"triplet.php?doget=delete_term&row=$row_number\"> X </a></td></tr>";
+        if ($ix <= $dimension)
+          echo "<td><a href=\"triplet.php?doget=delete_term&row=$row_number\"> X </a></td></tr>";
+        else
+          echo "<td><a style=\"color:red;\" href=\"triplet.php?doget=delete_term&row=$row_number\"> X </a></td></tr>";
       }
     }
     echo("</table>");
@@ -328,7 +355,7 @@ function listObjectsForThisNode($node) // x = a
   global $m_3d;
   global $dimension;
   global $adj_obj;
-  echo "<br>Adjacent Objects<br>";
+  echo "<p style=\"color:red;font-family:monospace;font-size: 10px;\"><br>";
   $counter = 0;
   for($yy=1;$yy<=$dimension;$yy++)
   {
@@ -338,13 +365,13 @@ function listObjectsForThisNode($node) // x = a
         if ($temp == 1) 
         {
           $counter ++;
-          echo("$node --> $yy ($zz) <br>");
+          echo("$node --($zz)--> $yy <br>");
           $adj_obj[$counter] = $yy;
         }
     }
   }
   $adj_obj[0] = $counter;
-  echo "Number of adjacent objects: $counter<br>";
+  echo "Number of adjacent objects: $counter</p>";
 }
 //=============================================
 function listSubjectsForThisNode($node) // y = b
@@ -353,7 +380,7 @@ function listSubjectsForThisNode($node) // y = b
   global $m_3d;
   global $dimension;
   global $adj_sub;
-  echo "<br>Adjacent Subjects<br>";
+  echo "<p style=\"color:blue;font-family:monospace;font-size: 10px;\"><br>";
   $counter = 0;
   for($xx=1;$xx<=$dimension;$xx++)
   {
@@ -363,13 +390,13 @@ function listSubjectsForThisNode($node) // y = b
         if ($temp == 1) 
         {
           $counter ++;
-          echo("$node <-- $xx ($zz) <br>");
+          echo("$node <--($zz)-- $xx <br>");
           $adj_sub[$counter] = $xx;
         }
     }
   }  
   $adj_sub[0] = $counter;
-  echo "Number of adjacent subjects: $counter<br>";
+  echo "Number of adjacent subjects: $counter</p>";
 }
 //=============================================
 function listNodesForThisPredicate($node) // z = c
@@ -377,7 +404,7 @@ function listNodesForThisPredicate($node) // z = c
 {
   global $m_3d;
   global $dimension;
-  echo "<br>Subjects and Objects using this predicate<br>";
+  echo "<p style=\"color:green;font-family:monospace;font-size: 10px;\">Subjects and Objects using this predicate<br>";
   for($xx=1;$xx<=$dimension;$xx++)
   {
     for($yy=1;$yy<=$dimension;$yy++)
@@ -386,6 +413,7 @@ function listNodesForThisPredicate($node) // z = c
         if ($temp == 1) echo("$xx --($node)--> $yy <br>");
     }
   }  
+  echo("</p>");
 }
 //=============================================
 function showMatrixA()
@@ -393,39 +421,18 @@ function showMatrixA()
 {
   global $m_3d;
   global $dimension;
-  echo "<p class=\"mx\">";
+  global $current_node;
+
+  echo "<p class=\"mx\">Adjacency Matrix<br>";
 
   for($xx=0;$xx<=$dimension;$xx++)
   {
-    echo sprintf("%03d",$xx);
+    echo sprintf("%03d&nbsp",$xx);
   }
-  echo "<br>";
+  //echo "<br>";
   for($xx=1;$xx<=$dimension;$xx++)
   {
-    echo sprintf("<br>%03d",$xx);
-    for($yy=1;$yy<=$dimension;$yy++)
-    {
-      $temp = 0;
-      for($zz=1;$zz<=$dimension;$zz++)
-      {
-        $val = $m_3d[$xx][$yy][$zz];
-        if ($val == 1) $temp = $temp + $zz;
-      }
-      if ($temp != 0) 
-          echo sprintf("%03d",$temp);
-      else
-          printf("&nbsp&nbsp.");
-    }
-  }  
-  echo("<br><br>");
-  for($xx=0;$xx<=$dimension;$xx++)
-  {
-    echo sprintf("%03d",$xx);
-  }
-  echo "<br>";
-  for($xx=1;$xx<=$dimension;$xx++)
-  {
-    echo sprintf("<br>%03d",$xx);
+    echo sprintf("<br><br><a href=\"triplet.php?doget=select_node&node=$xx\">%03d</a>",$xx);
     for($yy=1;$yy<=$dimension;$yy++)
     {
       $temp = 0;
@@ -434,10 +441,14 @@ function showMatrixA()
         $val = $m_3d[$xx][$yy][$zz];
         if ($val == 1) $temp = $temp + $val;
       }
-      if ($temp != 0) 
-          echo sprintf("%03d",$temp);
+      if ($temp != 0 && $xx == $current_node) 
+          echo sprintf("&nbsp<a style=\"color:red\" href=\"triplet.php?doget=select_node&node=$yy\">[%1d]</a>",$temp);
+      else if ($temp != 0 && $yy == $current_node) 
+          echo sprintf("&nbsp<a style=\"color:blue\" href=\"triplet.php?doget=select_node&node=$xx\">[%1d]</a>",$temp);
+      else if ($temp != 0 && $xx != $current_node) 
+          echo sprintf("&nbsp[%1d]",$temp);
       else
-          printf("&nbsp&nbsp.");
+          printf("&nbsp&nbsp&nbsp.");
     }
   }  
   echo("</p>");
@@ -617,18 +628,163 @@ echo("<html>");
 echo("<head>");
 
 echo("<style>
+a:link {
+  text-decoration: none;
+  color: blue;
+}
+a:visited {
+  text-decoration: none;
+  color: green;
+}
+a:hover {
+  text-decoration: none;
+  color: red;
+}
 .mx {
   font-size: 10px;
   font-family: monospace;
+}
+#container {
+  color: #336600;
+  background-color: cornsilk;
+  float: left;
+  width: 1000px;
+  height: 900px;
+  }
+
+  #config {
+  color: #336600;
+  //background-color: grey;
+  float: left;
+  width: 400px;
+  }
+
+  #meta {
+  color: #336600;
+  //background-color: red;
+  float: left;
+  width: 400px;
+  }
+
+  #payload {
+  color: #336600;
+  //background-color: blue;
+  float: left;
+  width: 400px;
+  }
+
+
+  #log {
+  color: #336600;
+  //background-color: yellow;
+  float: left;
+  width: 600px;
+  }
+
+  html {
+      min-height: 100%;
+  }
+
+  body {
+      background: -webkit-linear-gradient(left, #93B874, #C9DCB9);
+      background: -o-linear-gradient(right, #93B874, #C9DCB9);
+      background: -moz-linear-gradient(right, #93B874, #C9DCB9);
+      background: linear-gradient(to right, #93B874, #C9DCB9);
+      background-color: #93B874;
+  }
+  /* Navbar container */
+.navbar {
+ overflow: hidden;
+ background-color: #333;
+ font-family: Arial;
+}
+
+/* Links inside the navbar */
+.navbar a {
+ float: left;
+ font-size: 16px;
+ color: white;
+ text-align: center;
+ padding: 14px 16px;
+ text-decoration: none;
+}
+
+/* The dropdown container */
+.dropdown {
+ float: left;
+ overflow: hidden;
+}
+
+/* Dropdown button */
+.dropdown .dropbtn {
+ font-size: 16px;
+ border: none;
+ outline: none;
+ color: white;
+ padding: 14px 16px;
+ background-color: inherit;
+ font-family: inherit; /* Important for vertical align on mobile phones */
+ margin: 0; /* Important for vertical align on mobile phones */
+}
+
+/* Add a red background color to navbar links on hover */
+.navbar a:hover, .dropdown:hover .dropbtn {
+ background-color: red;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+ display: none;
+ position: absolute;
+ background-color: #f9f9f9;
+ min-width: 160px;
+ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+ z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+ float: none;
+ color: black;
+ padding: 12px 16px;
+ text-decoration: none;
+ display: block;
+ text-align: left;
+}
+
+/* Add a grey background color to dropdown links on hover */
+.dropdown-content a:hover {
+ background-color: #ddd;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+ display: block;
 }
 </style>");
 
 echo("</head>");
 echo("<body>");
 
+echo("<br><b>Graph Player Current Node: $current_node</b>");
+echo "<div class=\"navbar\">";
+
+    echo "<a href=\"triplet.php?doget=admin_triplets\">Show Triplets</a>";
+    echo "<a href=\"triplet.php?doget=admin_terms\">Show Terms</a>";
+    echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Triplets</a>";
+    echo "<a href=\"triplet.php?doget=random_triplet&range=$dimension&total=10\">Create Random Triplets</a>";
+
+    echo "<div class=\"dropdown\">
+             <button class=\"dropbtn\">Configure
+             <i class=\"fa fa-caret-down\"></i>
+             </button>
+             <div class=\"dropdown-content\">
+             ";
+            echo "<a href=manager.php?do=select&domain=$space>Space</a>";
+     echo "</div></div>";
+
+echo "</div>";
 echo "<br>";
-echo "<a href=\"triplet.php?doget=admin_triplets\"> Triplets</a>";
-echo "<a href=\"triplet.php?doget=admin_terms\"> Terms </a>";
 
 if ($admin_triplets == 1)
 {
@@ -645,8 +801,7 @@ if ($admin_triplets == 1)
 
   listAllTriplets($file_rdf);
 }
-echo "<a href=\"triplet.php?doget=random_triplet&range=$dimension&total=10\"> Add random triplets </a>";
-echo "<a href=\"triplet.php?doget=clear_triplet\"> Clear all triplets </a>";
+
 if ($admin_terms == 1)
 {
 echo "<table border=0>";
@@ -667,7 +822,7 @@ listSubjectsForThisNode($current_node); // y = b
 listNodesForThisPredicate($current_node); // z = c
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
 
-reasoning();
+//reasoning();
 //$arr = array("a"=>"yellow", "b"=>"pink", "c"=>"purple"); 
   
 // calling array_walk() with no extra parameter 
