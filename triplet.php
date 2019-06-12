@@ -2,7 +2,7 @@
 session_start();
 //=============================================
 // File.......: triplet.php
-// Date.......: 2019-06-09
+// Date.......: 2019-06-12
 // Author.....: Benny Saxen
 // Description: 
 //=============================================
@@ -12,6 +12,17 @@ class triplet {
     public $predicate;
 }
 $obj = new triplet();
+
+class configuration {
+  public $dimension;
+  public $filename;
+  public $direction;
+  public $file_abd;
+  public $file_rdf;
+  public $n_rnd_tpl;
+}
+$config = new configuration();
+$config->filename = "resources/configuration.txt";
 
 class term {
   public $index;
@@ -27,23 +38,26 @@ $m_3d  = array();
 $v_error = array();
 
 $do = '';
-$file_abc = 'resources/abc.txt';
-$file_rdf = 'resources/storage.rdf';
-$g_class = 1;
-$g_type = 3;
-$dimension = 10;
+$config->file_abc = 'resources/abc.txt';
+$config->file_rdf = 'resources/storage.rdf';
+
+$config->dimension = 10;
+$config->direction = 2; // 1=one direction, 2 =bidirectional
+$config->n_rnd_tpl = 10;
+readConfig($config);
+
 //=============================================
 // Start of library
 //=============================================
 $admin_triplets = $_SESSION["admin_triplets"];
 $admin_terms    = $_SESSION["admin_terms"];
 $current_node   = $_SESSION["current_node"];
+$set_configuration  = $_SESSION["set_configuration"];
+$dimension      = $_SESSION["dimension"];
+$direction      = $_SESSION["direction"];
 $number_of_triplets = $_SESSION["number_of_triplets"];
 
-function myfunction($value, $key) 
-{ 
-    echo "The key $key has the value $value<br>"; 
-} 
+
 //=============================================
 function reasoning()
 //=============================================
@@ -60,16 +74,54 @@ function reasoning()
         echo "<br>$ix is of type class";
     }
   }
-
- 
   return;
 }
 //=============================================
-function addTerm($f_abc,$term)
+function writeConfig($co)
+//=============================================
+{
+  echo "Write configuration";
+  $f_file = $co->filename;
+  $doc = fopen($f_file, "w");
+  if ($doc)
+  {
+        fwrite($doc, "DIMENSION $co->dimension\n");
+        fwrite($doc, "DIRECTION $co->direction\n");
+        fwrite($doc, "RANDOM_N $co->n_rnd_tpl\n");
+
+        fwrite($doc, "FILE_ABC $co->file_abc\n");
+        fwrite($doc, "FILE_RDF $co->file_rdf\n");
+ 
+        fclose($doc);
+  }
+  return;
+}
+//=============================================
+function readConfig($co)
+//=============================================
+{
+  //echo "Read configuration";
+  $f_file = $co->filename;
+  $doc = fopen($f_file, "r");
+  if ($doc)
+  {
+    while(!feof($doc))
+    {
+        $line = fgets($doc);
+        sscanf($line, "%s %d", $key,$value );
+        if ($key == "DIMENSION") $co->dimension = $value;
+        if ($key == "DIRECTION") $co->direction = $value;
+        if ($key == "RANDOM_N") $co->n_rnd_tpl = $value;
+    }
+    fclose($doc);
+  }
+}
+//=============================================
+function addTerm($co,$term)
 //=============================================
 {
   echo "Add term to vocabulary";
-  $f_file = $f_abc;
+  $f_file = $co->file_abc;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
@@ -79,45 +131,49 @@ function addTerm($f_abc,$term)
   return;
 }
 //=============================================
-function randomTriplet($f_rdf,$range, $total)
+function randomTriplet($co)
 //=============================================
 {
   echo "Add random triplet to storage";
-  $f_file = $f_rdf;
+  $f_file = $co->file_rdf;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        for ($ii = 0; $ii < $total; $ii++)
+        for ($ii = 0; $ii < $co->n_rnd_tpl; $ii++)
         {
-           $rand_sub = rand(1,$range);
-           $rand_obj = rand(1,$range);
-           $rand_pre = rand(1,$range);
+           $rand_sub = rand(1,$co->dimension);
+           $rand_obj = rand(1,$co->dimension);
+           $rand_pre = rand(1,$co->dimension);
            fwrite($doc, "$rand_sub $rand_pre $rand_obj\n");
+           if ($co->direction == 2)
+            fwrite($doc, "$rand_obj $rand_pre $rand_sub\n");
         }
         fclose($doc);
   }
   return;
 }
 //=============================================
-function addTriplet($f_rdf,$obj)
+function addTriplet($co,$obj)
 //=============================================
 {
   echo "Add triplet to storage";
-  $f_file = $f_rdf;
+  $f_file = $co->file_rdf;
   $doc = fopen($f_file, "a");
   if ($doc)
   {
         fwrite($doc, "$obj->subject $obj->predicate $obj->object\n");
+        if ($co->direction == 2)
+          fwrite($doc, "$obj->object $obj->predicate $obj->subject\n");
         fclose($doc);
   }
   return;
 }
 //=============================================
-function clearTriplet($f_rdf)
+function clearTriplet($co)
 //=============================================
 {
   echo "Clear triplet storage";
-  $f_file = $f_rdf;
+  $f_file = $co->file_rdf;
   $doc = fopen($f_file, "w");
   if ($doc)
   {
@@ -126,12 +182,12 @@ function clearTriplet($f_rdf)
   return;
 }
 //=============================================
-function deleteTriplet($f_rdf,$row_number)
+function deleteTriplet($co,$row_number)
 //=============================================
 {
   $ok = 0;
   $filename1 = 'resources/temp.txt';
-  $filename2 = $f_rdf;
+  $filename2 = $co->file_rdf;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -153,12 +209,12 @@ function deleteTriplet($f_rdf,$row_number)
   }
 }
 //=============================================
-function deleteTerm($f_abc,$row_number)
+function deleteTerm($co,$row_number)
 //=============================================
 {
   $ok = 0;
   $filename1 = 'resources/temp.txt';
-  $filename2 = $f_abc;
+  $filename2 = $co->file_abc;
   $fh1 = fopen($filename1, 'w') or die("Cannot write to file $filename1");
   $fh2 = fopen($filename2, 'r') or die("Cannot read file $filename2");
   $lines = 0;
@@ -198,7 +254,7 @@ function listNodeNeighbours($node)
   return;
 }
 //=============================================
-function listAllTriplets()
+function listAllTriplets($co)
 //=============================================
 {
   global $current_node;
@@ -206,7 +262,6 @@ function listAllTriplets()
   global $number_of_triplets;
   global $v_sub,$v_obj,$v_pre,$v_error;
   global $m_3d;
-  global $dimension;
 
   echo("<p style=\"color:red;font-family:monospace;font-size: 10px;\"><table border=1>");
   for ($ii = 1; $ii <= $number_of_triplets;$ii++)
@@ -236,7 +291,7 @@ function listAllTriplets()
             echo("<td><a href=\"triplet.php?doget=select_node&node=$ix_o\">$ix_o</a></td>");
 
         echo("<td>$t1</td><td>$t2</td><td>$t3</td>");
-        if ($ix_s > $dimension || $ix_o > $dimension)
+        if ($ix_s > $co->dimension || $ix_o > $co->dimension)
           echo "<td><a style=\"color:red;\" href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td>";
         else 
           echo "<td><a href=\"triplet.php?doget=delete_triplet&row=$ii\"> X </a></td>";
@@ -251,7 +306,7 @@ function listAllTriplets()
   return;
 }
 //=============================================
-function update($f_rdf)
+function update($co)
 //=============================================
 {
   global $current_node;
@@ -261,7 +316,7 @@ function update($f_rdf)
   global $m_3d;
   global $v_error;
 
-  $file = fopen($f_rdf, "r");
+  $file = fopen($co->file_rdf, "r");
   if ($file)
   {
     $row_number = 0;
@@ -296,12 +351,12 @@ function update($f_rdf)
   return;
 }
 //=============================================
-function listAllTerms($f_abc)
+function listAllTerms($co)
 //=============================================
 {
   global $dimension;
 
-  $file = fopen($f_abc, "r");
+  $file = fopen($co->file_abc, "r");
   if ($file)
   {
     $row_number = 0;
@@ -317,7 +372,7 @@ function listAllTerms($f_abc)
       {
         sscanf($line, "%d %s", $ix,$term);
         echo("<tr><td>$ix</td><td><a href=\"triplet.php?doget=select_node&node=$ix\">$term</a></td>");
-        if ($ix <= $dimension)
+        if ($ix <= $co->dimension)
           echo "<td><a href=\"triplet.php?doget=delete_term&row=$row_number\"> X </a></td></tr>";
         else
           echo "<td><a style=\"color:red;\" href=\"triplet.php?doget=delete_term&row=$row_number\"> X </a></td></tr>";
@@ -329,11 +384,11 @@ function listAllTerms($f_abc)
   return;
 }
 //=============================================
-function readVocabulary($f_abc)
+function readVocabulary($co)
 //=============================================
 {
   global $vocx;
-  $file = fopen($f_abc, "r");
+  $file = fopen($co->file_abc, "r");
   if ($file)
   {
     while(!feof($file))
@@ -349,17 +404,16 @@ function readVocabulary($f_abc)
 }
 
 //=============================================
-function listObjectsForThisNode($node) // x = a
+function listObjectsForThisNode($co,$node) // x = a
 //=============================================
 {
   global $m_3d;
-  global $dimension;
   global $adj_obj;
   echo "<p style=\"color:red;font-family:monospace;font-size: 10px;\"><br>";
   $counter = 0;
-  for($yy=1;$yy<=$dimension;$yy++)
+  for($yy=1;$yy<=$co->dimension;$yy++)
   {
-    for($zz=1;$zz<=$dimension;$zz++)
+    for($zz=1;$zz<=$co->dimension;$zz++)
     {
         $temp = $m_3d[$node][$yy][$zz];
         if ($temp == 1) 
@@ -374,17 +428,16 @@ function listObjectsForThisNode($node) // x = a
   echo "Number of adjacent objects: $counter</p>";
 }
 //=============================================
-function listSubjectsForThisNode($node) // y = b
+function listSubjectsForThisNode($co,$node) // y = b
 //=============================================
 {
   global $m_3d;
-  global $dimension;
   global $adj_sub;
   echo "<p style=\"color:blue;font-family:monospace;font-size: 10px;\"><br>";
   $counter = 0;
-  for($xx=1;$xx<=$dimension;$xx++)
+  for($xx=1;$xx<=$co->dimension;$xx++)
   {
-    for($zz=1;$zz<=$dimension;$zz++)
+    for($zz=1;$zz<=$co->dimension;$zz++)
     {
         $temp = $m_3d[$xx][$node][$zz];
         if ($temp == 1) 
@@ -399,15 +452,15 @@ function listSubjectsForThisNode($node) // y = b
   echo "Number of adjacent subjects: $counter</p>";
 }
 //=============================================
-function listNodesForThisPredicate($node) // z = c
+function listNodesForThisPredicate($co,$node) // z = c
 //=============================================
 {
   global $m_3d;
-  global $dimension;
+
   echo "<p style=\"color:green;font-family:monospace;font-size: 10px;\">Subjects and Objects using this predicate<br>";
-  for($xx=1;$xx<=$dimension;$xx++)
+  for($xx=1;$xx<=$co->dimension;$xx++)
   {
-    for($yy=1;$yy<=$dimension;$yy++)
+    for($yy=1;$yy<=$co->dimension;$yy++)
     {
         $temp = $m_3d[$xx][$yy][$node];
         if ($temp == 1) echo("$xx --($node)--> $yy <br>");
@@ -416,27 +469,26 @@ function listNodesForThisPredicate($node) // z = c
   echo("</p>");
 }
 //=============================================
-function showMatrixA()
+function showMatrixA($co)
 //=============================================
 {
   global $m_3d;
-  global $dimension;
   global $current_node;
 
   echo "<p class=\"mx\">Adjacency Matrix<br>";
 
-  for($xx=0;$xx<=$dimension;$xx++)
+  for($xx=0;$xx<=$co->dimension;$xx++)
   {
     echo sprintf("%03d&nbsp",$xx);
   }
   //echo "<br>";
-  for($xx=1;$xx<=$dimension;$xx++)
+  for($xx=1;$xx<=$co->dimension;$xx++)
   {
     echo sprintf("<br><br><a href=\"triplet.php?doget=select_node&node=$xx\">%03d</a>",$xx);
-    for($yy=1;$yy<=$dimension;$yy++)
+    for($yy=1;$yy<=$co->dimension;$yy++)
     {
       $temp = 0;
-      for($zz=1;$zz<=$dimension;$zz++)
+      for($zz=1;$zz<=$co->dimension;$zz++)
       {
         $val = $m_3d[$xx][$yy][$zz];
         if ($val == 1) $temp = $temp + $val;
@@ -474,6 +526,14 @@ if (isset($_GET['doget'])) // Mandatory
     }
 
 
+    if ($do == 'set_configuration')
+    {
+      if ($set_configuration == 0)
+        $set_configuration = 1;
+      else
+        $set_configuration = 0;
+    }
+
     if ($do == 'admin_triplets')
     {
       if ($admin_triplets == 0)
@@ -495,12 +555,12 @@ if (isset($_GET['doget'])) // Mandatory
        if (is_numeric($_GET['row']))
        {
            $row = $_GET['row'];
-           deleteTriplet($file_rdf,$row);
+           deleteTriplet($config,$row);
        }
     }
     if ($do == 'clear_triplet')
     {
-        clearTriplet($file_rdf);
+        clearTriplet($config);
     }
 
     if ($do == 'random_triplet')
@@ -516,7 +576,7 @@ if (isset($_GET['doget'])) // Mandatory
            $npar++;
            $total = $_GET['total'];
        }
-       if ($npar == 2) randomTriplet($file_rdf,$range, $total);
+       if ($npar == 2) randomTriplet($config);
     }
 
     if ($do == 'delete_term')
@@ -524,7 +584,7 @@ if (isset($_GET['doget'])) // Mandatory
        if (is_numeric($_GET['row']))
        {
            $row = $_GET['row'];
-           deleteTerm($file_abc,$row);
+           deleteTerm($config,$row);
        }
     }
 
@@ -558,8 +618,9 @@ if (isset($_GET['doget'])) // Mandatory
     }
 }
 $_SESSION["admin_triplets"] = $admin_triplets;
-$_SESSION["admin_terms"] = $admin_terms;
-$_SESSION["current_node"] = $current_node;
+$_SESSION["admin_terms"]    = $admin_terms;
+$_SESSION["set_configuration"]  = $set_configuration;
+$_SESSION["current_node"]   = $current_node;
 
 //=============================================
 // POST
@@ -588,7 +649,7 @@ if (isset($_POST['dopost']))
       }
       if($npar == 3)
       {
-          addTriplet($file_rdf,$obj);
+          addTriplet($config,$obj);
       }
       else
       {
@@ -610,17 +671,45 @@ if (isset($_POST['dopost']))
       }
       if($npar == 2)
       {
-          addTerm($file_abc,$term);
+          addTerm($config,$term);
       }
       else
       {
           echo "POST Missing term information";
       }
   }
+  if ($do == 'set_configuration')
+  {
+      $npar = 0;
+      if (is_numeric($_POST['dimension'])) // Mandatory
+      {
+          $npar++;
+          $config->dimension = $_POST['dimension'];
+          $_SESSION["dimension"]  = $config->dimension;
+      }
+      if (is_numeric($_POST['direction'])) // Mandatory
+      {
+          $npar++;
+          $config->direction = $_POST['direction'];
+          $_SESSION["direction"]  = $config->direction;
+      }
+
+      if (is_numeric($_POST['n_rnd_tpl'])) // Mandatory
+      {
+          $npar++;
+          $config->n_rnd_tpl = $_POST['n_rnd_tpl'];
+          $_SESSION["n_rnd_tpl"]  = $config->n_rnd_tpl;
+      }
+
+      if($npar == 3)
+      {
+          writeConfig($config);
+      }
+  }
 }
 
-readVocabulary($file_abc);
-update($file_rdf);
+readVocabulary($config);
+update($config);
 //=============================================
 // Front-End
 //=============================================
@@ -630,7 +719,7 @@ echo("<head>");
 echo("<style>
 a:link {
   text-decoration: none;
-  color: blue;
+  color: green;
 }
 a:visited {
   text-decoration: none;
@@ -769,13 +858,14 @@ echo("<body>");
 echo("<br><b>Graph Player Current Node: $current_node</b>");
 echo "<div class=\"navbar\">";
 
-    echo "<a href=\"triplet.php?doget=admin_triplets\">Show Triplets</a>";
-    echo "<a href=\"triplet.php?doget=admin_terms\">Show Terms</a>";
+    echo "<a href=\"triplet.php?doget=admin_triplets\">Triplets</a>";
+    echo "<a href=\"triplet.php?doget=admin_terms\">Terms</a>";
+    echo "<a href=\"triplet.php?doget=set_configuration\">Configuration</a>";
     echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Triplets</a>";
     echo "<a href=\"triplet.php?doget=random_triplet&range=$dimension&total=10\">Create Random Triplets</a>";
 
     echo "<div class=\"dropdown\">
-             <button class=\"dropbtn\">Configure
+             <button class=\"dropbtn\">Void
              <i class=\"fa fa-caret-down\"></i>
              </button>
              <div class=\"dropdown-content\">
@@ -799,7 +889,7 @@ if ($admin_triplets == 1)
   </form>
   </table>";
 
-  listAllTriplets($file_rdf);
+  listAllTriplets($config,$file_rdf);
 }
 
 if ($admin_terms == 1)
@@ -813,13 +903,27 @@ echo "
   <td><input type= \"submit\" value=\"Create Term\"></td></tr>
 </form>
 </table>";
-listAllTerms($file_abc);
+listAllTerms($config,$file_abc);
 
 }
-showMatrixA();
-listObjectsForThisNode($current_node); // x = a
-listSubjectsForThisNode($current_node); // y = b
-listNodesForThisPredicate($current_node); // z = c
+if ($set_configuration == 1)
+{
+echo "<table border=0>";
+echo "
+<form action=\"triplet.php\" method=\"post\">
+  <input type=\"hidden\" name=\"dopost\" value=\"set_configuration\">
+  <tr><td>Dimension</td><td> <input type=\"text\" name=\"dimension\" size=\"5\" value=$config->dimension></td>
+  <tr><td>Direction</td><td> <input type=\"text\" name=\"direction\" size=\"5\" value=$config->direction></td>
+  <tr><td>Random N</td><td> <input type=\"text\" name=\"n_rnd_tpl\" size=\"5\" value=$config->n_rnd_tpl></td>
+  <td><input type= \"submit\" value=\"Set\"></td></tr>
+</form>
+</table>";
+
+}
+showMatrixA($config);
+listObjectsForThisNode($config,$current_node); // x = a
+listSubjectsForThisNode($config,$current_node); // y = b
+listNodesForThisPredicate($config,$current_node); // z = c
 //echo ("<iframe id= \"ilog\" style=\"background: #FFFFFF;\" src=$doc_voc width=\"100\" height=\"100\"></iframe>");
 
 //reasoning();
