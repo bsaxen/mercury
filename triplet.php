@@ -942,20 +942,45 @@ echo("<body>");
 echo("<br><b>Graph Player Current Node: $current_node</b>");
 echo "<div class=\"navbar\">";
 
-    echo "<a href=\"triplet.php?doget=admin_triplets\">Triplets</a>";
-    echo "<a href=\"triplet.php?doget=admin_terms\">Terms</a>";
-    echo "<a href=\"triplet.php?doget=set_configuration\">Configuration</a>";
-    echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Triplets</a>";
-    echo "<a href=\"triplet.php?doget=random_triplet&range=$config->dimension&total=$config->n_rnd_tpl\">Create Random Triplets</a>";
+echo "<div class=\"dropdown\">
+<button class=\"dropbtn\">File
+<i class=\"fa fa-caret-down\"></i>
+</button>
+<div class=\"dropdown-content\">
+";
+echo "<a href=triplet.php?do=open_graph>Open Graph</a>";
+echo "<a href=triplet.php?do=open_graph>Open Mapping</a>";
+echo "<a href=triplet.php?do=open_graph>Save Graph</a>";
+echo "<a href=triplet.php?do=open_graph>Save Mapping</a>";
+echo "</div></div>";
 
-    echo "<div class=\"dropdown\">
-             <button class=\"dropbtn\">Void
-             <i class=\"fa fa-caret-down\"></i>
-             </button>
-             <div class=\"dropdown-content\">
-             ";
-            echo "<a href=manager.php?do=select&domain=$space>Space</a>";
-     echo "</div></div>";
+echo "<div class=\"dropdown\">
+<button class=\"dropbtn\">Edit
+<i class=\"fa fa-caret-down\"></i>
+</button>
+<div class=\"dropdown-content\">
+";
+echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Triples</a>";
+echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Mapping</a>";
+echo "<a href=\"triplet.php?doget=random_triplet&range=$config->dimension&total=$config->n_rnd_tpl\">Create Random Triplets</a>";
+echo "</div></div>";
+
+echo "<div class=\"dropdown\">
+<button class=\"dropbtn\">Show
+<i class=\"fa fa-caret-down\"></i>
+</button>
+<div class=\"dropdown-content\">
+";
+echo "<a href=\"triplet.php?doget=admin_triplets\">List of Triples</a>";
+echo "<a href=\"triplet.php?doget=admin_terms\">List of Mapping</a>";
+echo "<a href=\"triplet.php?doget=set_configuration\">Configuration</a>";
+echo "<a href=\"triplet.php?doget=show_adjacency_matrix\">Adjacency Matrix</a>";
+echo "<a href=\"triplet.php?doget=show_graph_matrix\">Graph Matrix</a>";
+echo "</div></div>";
+
+
+
+
 
 echo "</div>";
 echo "<br>";
