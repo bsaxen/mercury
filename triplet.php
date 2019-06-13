@@ -46,6 +46,7 @@ $config->file_rdf = 'resources/storage.rdf';
 $config->dimension = 10;
 $config->direction = 2; // 1=one direction, 2 =bidirectional
 $config->n_rnd_tpl = 10;
+
 readConfig($config);
 
 //=============================================
@@ -55,8 +56,8 @@ $admin_triplets = $_SESSION["admin_triplets"];
 $admin_terms    = $_SESSION["admin_terms"];
 $current_node   = $_SESSION["current_node"];
 $set_configuration  = $_SESSION["set_configuration"];
-$dimension      = $_SESSION["dimension"];
-$direction      = $_SESSION["direction"];
+//$dimension      = $_SESSION["dimension"];
+//$direction      = $_SESSION["direction"];
 $number_of_triplets = $_SESSION["number_of_triplets"];
 
 
@@ -127,8 +128,14 @@ function addTerm($co,$term)
   $doc = fopen($f_file, "a");
   if ($doc)
   {
+      if($term->index < $co->dimension && $term->index > 0)
+      {
         fwrite($doc, "$term->index $term->word\n");
-        fclose($doc);
+      }
+      else
+        echo("Index out of range $term->index<br>");
+
+      fclose($doc);
   }
   return;
 }
@@ -141,7 +148,7 @@ function randomTriplet($co)
   $doc = fopen($f_file, "a");
   if ($doc)
   {
-        for ($ii = 0; $ii < $co->n_rnd_tpl; $ii++)
+        for ($ii = 1; $ii <= $co->n_rnd_tpl; $ii++)
         {
            $rand_sub = rand(1,$co->dimension);
            $rand_obj = rand(1,$co->dimension);
@@ -159,6 +166,24 @@ function addTriplet($co,$obj)
 //=============================================
 {
   echo "Add triplet to storage";
+  $temp = $obj->subject;
+  if($temp > $co->dimension || $temp < 1)
+  {
+    echo "<h1>Subject index out of range: $temp</h1>";
+    return;
+  } 
+  $temp = $obj->object;
+  if($temp > $co->dimension || $temp < 1)
+  {
+    echo "<h1>Object index out of range: $temp</h1>";
+    return;
+  } 
+  $temp = $obj->predicate;
+  if($temp > $co->dimension || $temp < 1)
+  {
+    echo "<h1>Predicate index out of range: $temp</h1>";
+    return;
+  } 
   $f_file = $co->file_rdf;
   $doc = fopen($f_file, "a");
   if ($doc)
@@ -486,7 +511,7 @@ function iterateGraphs($co)
     }
   }  
 
-  for ($dd = 1; $dd <= $co->n_rnd_tpl; $dd++)
+  for ($dd = 1; $dd <= $co->n_rnd_tpl+1; $dd++)
   {
     for($xx=1;$xx<=$co->dimension;$xx++)
     {
@@ -497,8 +522,9 @@ function iterateGraphs($co)
         {  
           $sum = $sum + $m_graphs[$xx][$tt]*$m_graphs[$tt][$yy];
         }
+        //echo("dd=$dd xx=$xx yy=$yy sum=$sum<br>");
         $m_graphs[$xx][$yy] = $m_graphs[$xx][$yy] + $sum;
-        if ($m_graphs[$xx][$yy] > 0)$m_graphs[$xx][$yy] = 1;
+        if ($m_graphs[$xx][$yy] > 1)$m_graphs[$xx][$yy] = 1;
       }
     }  
   }
@@ -667,7 +693,7 @@ if (isset($_GET['doget'])) // Mandatory
         }
         if($npar == 3)
         {
-            addTriplet($file_rdf,$obj);
+            addTriplet($config,$obj);
         }
         else
         {
@@ -920,7 +946,7 @@ echo "<div class=\"navbar\">";
     echo "<a href=\"triplet.php?doget=admin_terms\">Terms</a>";
     echo "<a href=\"triplet.php?doget=set_configuration\">Configuration</a>";
     echo "<a href=\"triplet.php?doget=clear_triplet\">Clear Triplets</a>";
-    echo "<a href=\"triplet.php?doget=random_triplet&range=$dimension&total=10\">Create Random Triplets</a>";
+    echo "<a href=\"triplet.php?doget=random_triplet&range=$config->dimension&total=$config->n_rnd_tpl\">Create Random Triplets</a>";
 
     echo "<div class=\"dropdown\">
              <button class=\"dropbtn\">Void
