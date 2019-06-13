@@ -2,7 +2,7 @@
 session_start();
 //=============================================
 // File.......: triplet.php
-// Date.......: 2019-06-12
+// Date.......: 2019-06-13
 // Author.....: Benny Saxen
 // Description: 
 //=============================================
@@ -36,6 +36,8 @@ $m_pre = array();
 $m_obj = array();
 $m_3d  = array();
 $v_error = array();
+
+$m_graphs = array();
 
 $do = '';
 $config->file_abc = 'resources/abc.txt';
@@ -336,6 +338,7 @@ function update($co)
         if ($m_3d[$ix_s][$ix_o][$ix_p] == 0)
         {
           $m_3d[$ix_s][$ix_o][$ix_p] = 1;
+          $m_3d[$ix_s][$ix_o][0] = 1;
           $v_error[$row_number] = 0;
         }
         else
@@ -469,11 +472,45 @@ function listNodesForThisPredicate($co,$node) // z = c
   echo("</p>");
 }
 //=============================================
+function iterateGraphs($co) 
+//=============================================
+{
+  global $m_3d;
+  global $m_graphs;
+
+  for($xx=1;$xx<=$co->dimension;$xx++)
+  {
+    for($yy=1;$yy<=$co->dimension;$yy++)
+    {
+      $m_graphs[$xx][$yy] =  $m_3d[$xx][$yy][0];
+    }
+  }  
+
+  for ($dd = 1; $dd <= $co->n_rnd_tpl; $dd++)
+  {
+    for($xx=1;$xx<=$co->dimension;$xx++)
+    {
+      for($yy=1;$yy<=$co->dimension;$yy++)
+      {
+        $sum = 0;
+        for($tt=1;$tt<=$co->dimension;$tt++) 
+        {  
+          $sum = $sum + $m_graphs[$xx][$tt]*$m_graphs[$tt][$yy];
+        }
+        $m_graphs[$xx][$yy] = $m_graphs[$xx][$yy] + $sum;
+        if ($m_graphs[$xx][$yy] > 0)$m_graphs[$xx][$yy] = 1;
+      }
+    }  
+  }
+  echo("</p>");
+}
+//=============================================
 function showMatrixA($co)
 //=============================================
 {
   global $m_3d;
   global $current_node;
+  global $m_graphs;
 
   echo "<p class=\"mx\">Adjacency Matrix<br>";
 
@@ -498,6 +535,27 @@ function showMatrixA($co)
       else if ($temp != 0 && $yy == $current_node) 
           echo sprintf("&nbsp<a style=\"color:blue\" href=\"triplet.php?doget=select_node&node=$xx\">[%1d]</a>",$temp);
       else if ($temp != 0 && $xx != $current_node) 
+          echo sprintf("&nbsp[%1d]",$temp);
+      else
+          printf("&nbsp&nbsp&nbsp.");
+    }
+  }  
+
+
+  echo "<br><br>";
+  for($xx=0;$xx<=$co->dimension;$xx++)
+  {
+    echo sprintf("%03d&nbsp",$xx);
+  }
+  //echo "<br>";
+  for($xx=1;$xx<=$co->dimension;$xx++)
+  {
+    echo sprintf("<br><br><a href=\"triplet.php?doget=select_node&node=$xx\">%03d</a>",$xx);
+    for($yy=1;$yy<=$co->dimension;$yy++)
+    {
+        $temp = 0;
+        $temp = $m_graphs[$xx][$yy];
+      if ($temp != 0 ) 
           echo sprintf("&nbsp[%1d]",$temp);
       else
           printf("&nbsp&nbsp&nbsp.");
@@ -920,6 +978,7 @@ echo "
 </table>";
 
 }
+iterateGraphs($config);
 showMatrixA($config);
 listObjectsForThisNode($config,$current_node); // x = a
 listSubjectsForThisNode($config,$current_node); // y = b
