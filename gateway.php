@@ -1,19 +1,17 @@
 <?php
 //=============================================
 // File.......: gateway.php
-// Date.......: 2019-06-04
+// Date.......: 2019-12-09
 // Author.....: Benny Saxen
 // Description: Mercury Gateway
 //=============================================
 // Publish
-// http://iot.domain.com/gateway?id=123&no=123&do=config/meta/payload&json={}
+// http://mercury.domain.com/gateway?id=123&no=123&do=payload&json={}
 // Log
-// http://iot.domain.com/gateway?id=123&no=123&do=log&log=sdfdfdfg
+// http://mercury.domain.com/gateway?id=123&no=123&do=log&log=sdfdfdfg
 // Ping
-// http://iot.domain.com/gateway?id=123&no=123&do=ping
+// http://mercury.domain.com/gateway?id=123&no=123&do=ping
 // Feedback
-// Add fb = 1 to GET request
-// http://iot.domain.com/gateway?id=123&no=123&do=ping&fb=1
 // Feedback file format
 // [n]:message:
 // n = number of pending feedback files
